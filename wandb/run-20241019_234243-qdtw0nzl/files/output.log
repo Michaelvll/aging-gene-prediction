@@ -1,0 +1,3 @@
+/opt/conda/envs/gene/lib/python3.10/site-packages/torch/nn/modules/transformer.py:379: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.self_attn.num_heads is odd
+  warnings.warn(
+  5%|▌         | 10/200 [00:07<02:20,  1.35it/s]

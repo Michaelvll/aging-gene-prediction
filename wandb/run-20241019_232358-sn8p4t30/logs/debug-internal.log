@@ -1,0 +1,20 @@
+{"time":"2024-10-19T23:23:58.093890581Z","level":"INFO","msg":"using version","core version":"0.18.5"}
+{"time":"2024-10-19T23:23:58.093913867Z","level":"INFO","msg":"created symlink","path":"/home/gcpuser/gene/wandb/run-20241019_232358-sn8p4t30/logs/debug-core.log"}
+{"time":"2024-10-19T23:23:58.198101672Z","level":"INFO","msg":"created new stream","id":"sn8p4t30"}
+{"time":"2024-10-19T23:23:58.198152759Z","level":"INFO","msg":"stream: started","id":"sn8p4t30"}
+{"time":"2024-10-19T23:23:58.198207621Z","level":"INFO","msg":"sender: started","stream_id":"sn8p4t30"}
+{"time":"2024-10-19T23:23:58.198183163Z","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"sn8p4t30"}}
+{"time":"2024-10-19T23:23:58.198297179Z","level":"INFO","msg":"handler: started","stream_id":{"value":"sn8p4t30"}}
+{"time":"2024-10-19T23:23:58.331051041Z","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-10-19T23:23:58.464420825Z","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2024-10-19T23:23:58.465487603Z","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2024-10-19T23:23:58.55132014Z","level":"WARN","msg":"No job ingredients found, not creating job artifact"}
+{"time":"2024-10-19T23:23:58.551341712Z","level":"WARN","msg":"No source type found, not creating job artifact"}
+{"time":"2024-10-19T23:23:58.55134719Z","level":"INFO","msg":"sender: sendDefer: no job artifact to save"}
+{"time":"2024-10-19T23:23:58.710738185Z","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2024-10-19T23:23:58.757667932Z","level":"INFO","msg":"handler: operation stats","stats":{}}
+{"time":"2024-10-19T23:23:59.768517332Z","level":"INFO","msg":"stream: closing","id":"sn8p4t30"}
+{"time":"2024-10-19T23:23:59.768560027Z","level":"INFO","msg":"handler: closed","stream_id":{"value":"sn8p4t30"}}
+{"time":"2024-10-19T23:23:59.768589681Z","level":"INFO","msg":"writer: Close: closed","stream_id":{"value":"sn8p4t30"}}
+{"time":"2024-10-19T23:23:59.768659486Z","level":"INFO","msg":"sender: closed","stream_id":"sn8p4t30"}
+{"time":"2024-10-19T23:23:59.768668258Z","level":"INFO","msg":"stream: closed","id":"sn8p4t30"}

@@ -1,0 +1,55 @@
+/opt/conda/envs/gene/lib/python3.10/site-packages/torch/nn/modules/transformer.py:379: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.self_attn.num_heads is odd
+  warnings.warn(
+Epoch [1/50], Train Loss: 1.0572, Train Accuracy: 0.4360, Test Accuracy: 0.5031
+Epoch [2/50], Train Loss: 1.0225, Train Accuracy: 0.4645, Test Accuracy: 0.4969
+Epoch [3/50], Train Loss: 1.0023, Train Accuracy: 0.4769, Test Accuracy: 0.5340
+Epoch [4/50], Train Loss: 0.9992, Train Accuracy: 0.4552, Test Accuracy: 0.5401
+Epoch [5/50], Train Loss: 0.9903, Train Accuracy: 0.4969, Test Accuracy: 0.5340
+Epoch [6/50], Train Loss: 0.9920, Train Accuracy: 0.4954, Test Accuracy: 0.5401
+Epoch [7/50], Train Loss: 0.9871, Train Accuracy: 0.4969, Test Accuracy: 0.5401
+Epoch [8/50], Train Loss: 0.9886, Train Accuracy: 0.4969, Test Accuracy: 0.5586
+Epoch [9/50], Train Loss: 0.9849, Train Accuracy: 0.4931, Test Accuracy: 0.5432
+Epoch [10/50], Train Loss: 0.9822, Train Accuracy: 0.5031, Test Accuracy: 0.5432
+Epoch [11/50], Train Loss: 0.9791, Train Accuracy: 0.4954, Test Accuracy: 0.5432
+Epoch [12/50], Train Loss: 0.9869, Train Accuracy: 0.5023, Test Accuracy: 0.5432
+Epoch [13/50], Train Loss: 0.9804, Train Accuracy: 0.5147, Test Accuracy: 0.5463
+Epoch [14/50], Train Loss: 0.9850, Train Accuracy: 0.5015, Test Accuracy: 0.5432
+Epoch [15/50], Train Loss: 0.9832, Train Accuracy: 0.5046, Test Accuracy: 0.5247
+Epoch [16/50], Train Loss: 0.9670, Train Accuracy: 0.5131, Test Accuracy: 0.5494
+Epoch [17/50], Train Loss: 0.9708, Train Accuracy: 0.5177, Test Accuracy: 0.5617
+Epoch [18/50], Train Loss: 0.9673, Train Accuracy: 0.5170, Test Accuracy: 0.5463
+Epoch [19/50], Train Loss: 0.9646, Train Accuracy: 0.5301, Test Accuracy: 0.5494
+Epoch [20/50], Train Loss: 0.9644, Train Accuracy: 0.5216, Test Accuracy: 0.5864
+Epoch [21/50], Train Loss: 0.9641, Train Accuracy: 0.5255, Test Accuracy: 0.5617
+Epoch [22/50], Train Loss: 0.9538, Train Accuracy: 0.5340, Test Accuracy: 0.5679
+Epoch [23/50], Train Loss: 0.9528, Train Accuracy: 0.5239, Test Accuracy: 0.5586
+Epoch [24/50], Train Loss: 0.9493, Train Accuracy: 0.5255, Test Accuracy: 0.5741
+Epoch [25/50], Train Loss: 0.9508, Train Accuracy: 0.5378, Test Accuracy: 0.5679
+Epoch [26/50], Train Loss: 0.9472, Train Accuracy: 0.5340, Test Accuracy: 0.5710
+Epoch [27/50], Train Loss: 0.9513, Train Accuracy: 0.5340, Test Accuracy: 0.5648
+Epoch [28/50], Train Loss: 0.9454, Train Accuracy: 0.5293, Test Accuracy: 0.5617
+Epoch [29/50], Train Loss: 0.9439, Train Accuracy: 0.5293, Test Accuracy: 0.5463
+Epoch [30/50], Train Loss: 0.9487, Train Accuracy: 0.5270, Test Accuracy: 0.5648
+Epoch [31/50], Train Loss: 0.9409, Train Accuracy: 0.5332, Test Accuracy: 0.5648
+Epoch [32/50], Train Loss: 0.9449, Train Accuracy: 0.5285, Test Accuracy: 0.5309
+Epoch [33/50], Train Loss: 0.9516, Train Accuracy: 0.5309, Test Accuracy: 0.5679
+Epoch [34/50], Train Loss: 0.9348, Train Accuracy: 0.5355, Test Accuracy: 0.5679
+Epoch [35/50], Train Loss: 0.9361, Train Accuracy: 0.5386, Test Accuracy: 0.5710
+Epoch [36/50], Train Loss: 0.9352, Train Accuracy: 0.5363, Test Accuracy: 0.5525
+Epoch [37/50], Train Loss: 0.9468, Train Accuracy: 0.5270, Test Accuracy: 0.5648
+Epoch [38/50], Train Loss: 0.9372, Train Accuracy: 0.5370, Test Accuracy: 0.5710
+Epoch [39/50], Train Loss: 0.9409, Train Accuracy: 0.5278, Test Accuracy: 0.5710
+Epoch [40/50], Train Loss: 0.9369, Train Accuracy: 0.5409, Test Accuracy: 0.5679
+Epoch [41/50], Train Loss: 0.9334, Train Accuracy: 0.5378, Test Accuracy: 0.5556
+Epoch [42/50], Train Loss: 0.9460, Train Accuracy: 0.5262, Test Accuracy: 0.5679
+Epoch [43/50], Train Loss: 0.9362, Train Accuracy: 0.5355, Test Accuracy: 0.5741
+Epoch [44/50], Train Loss: 0.9491, Train Accuracy: 0.5224, Test Accuracy: 0.5741
+Epoch [45/50], Train Loss: 0.9343, Train Accuracy: 0.5424, Test Accuracy: 0.5679
+Epoch [46/50], Train Loss: 0.9338, Train Accuracy: 0.5324, Test Accuracy: 0.5586
+Epoch [47/50], Train Loss: 0.9540, Train Accuracy: 0.5363, Test Accuracy: 0.5772
+Epoch [48/50], Train Loss: 0.9395, Train Accuracy: 0.5301, Test Accuracy: 0.5710
+Epoch [49/50], Train Loss: 0.9262, Train Accuracy: 0.5409, Test Accuracy: 0.5772
+Epoch [50/50], Train Loss: 0.9270, Train Accuracy: 0.5424, Test Accuracy: 0.5741
+Final Test Accuracy: 0.5741
+/opt/conda/envs/gene/lib/python3.10/site-packages/wandb/sdk/wandb_run.py:2386: UserWarning: Run (41v9evjo) is finished. The call to `_console_raw_callback` will be ignored. Please make sure that you are using an active run.
+  lambda data: self._console_raw_callback("stderr", data),

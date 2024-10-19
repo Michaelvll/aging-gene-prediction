@@ -1,0 +1,20 @@
+{"time":"2024-10-19T23:36:23.554910543Z","level":"INFO","msg":"using version","core version":"0.18.5"}
+{"time":"2024-10-19T23:36:23.554923405Z","level":"INFO","msg":"created symlink","path":"/home/gcpuser/gene/wandb/run-20241019_233623-bm50208c/logs/debug-core.log"}
+{"time":"2024-10-19T23:36:23.656945723Z","level":"INFO","msg":"created new stream","id":"bm50208c"}
+{"time":"2024-10-19T23:36:23.656996089Z","level":"INFO","msg":"stream: started","id":"bm50208c"}
+{"time":"2024-10-19T23:36:23.657059702Z","level":"INFO","msg":"sender: started","stream_id":"bm50208c"}
+{"time":"2024-10-19T23:36:23.65703664Z","level":"INFO","msg":"writer: Do: started","stream_id":{"value":"bm50208c"}}
+{"time":"2024-10-19T23:36:23.657123981Z","level":"INFO","msg":"handler: started","stream_id":{"value":"bm50208c"}}
+{"time":"2024-10-19T23:36:23.78673113Z","level":"INFO","msg":"Starting system monitor"}
+{"time":"2024-10-19T23:36:23.920555876Z","level":"INFO","msg":"Stopping system monitor"}
+{"time":"2024-10-19T23:36:23.921235966Z","level":"INFO","msg":"Stopped system monitor"}
+{"time":"2024-10-19T23:36:24.091500311Z","level":"WARN","msg":"No job ingredients found, not creating job artifact"}
+{"time":"2024-10-19T23:36:24.091527837Z","level":"WARN","msg":"No source type found, not creating job artifact"}
+{"time":"2024-10-19T23:36:24.091533865Z","level":"INFO","msg":"sender: sendDefer: no job artifact to save"}
+{"time":"2024-10-19T23:36:24.221793128Z","level":"INFO","msg":"fileTransfer: Close: file transfer manager closed"}
+{"time":"2024-10-19T23:36:24.277479951Z","level":"INFO","msg":"handler: operation stats","stats":{}}
+{"time":"2024-10-19T23:36:25.287955162Z","level":"INFO","msg":"stream: closing","id":"bm50208c"}
+{"time":"2024-10-19T23:36:25.287975556Z","level":"INFO","msg":"handler: closed","stream_id":{"value":"bm50208c"}}
+{"time":"2024-10-19T23:36:25.287999667Z","level":"INFO","msg":"writer: Close: closed","stream_id":{"value":"bm50208c"}}
+{"time":"2024-10-19T23:36:25.288078605Z","level":"INFO","msg":"sender: closed","stream_id":"bm50208c"}
+{"time":"2024-10-19T23:36:25.288089848Z","level":"INFO","msg":"stream: closed","id":"bm50208c"}

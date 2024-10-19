@@ -1,0 +1,5 @@
+/opt/conda/envs/gene/lib/python3.10/site-packages/torch/nn/modules/transformer.py:379: UserWarning: enable_nested_tensor is True, but self.use_nested_tensor is False because encoder_layer.self_attn.num_heads is odd
+  warnings.warn(
+ 44%|████▎     | 87/200 [01:06<01:26,  1.30it/s]
+/opt/conda/envs/gene/lib/python3.10/site-packages/wandb/sdk/wandb_run.py:2386: UserWarning: Run (ezr6emvi) is finished. The call to `_console_raw_callback` will be ignored. Please make sure that you are using an active run.
+  lambda data: self._console_raw_callback("stderr", data),

@@ -1,0 +1,30 @@
+{
+  "os":  "Linux-5.10.0-26-cloud-amd64-x86_64-with-glibc2.31",
+  "python":  "3.10.15",
+  "startedAt":  "2024-10-19T23:15:12.682556Z",
+  "program":  "/home/gcpuser/gene/two-head.ipynb",
+  "git":  {
+    "commit":  "d1634d63fcfc158f8a3f0c97d9972d5b2d181a1b"
+  },
+  "email":  "zhanghao.wu@outlook.com",
+  "root":  "/home/gcpuser/gene",
+  "host":  "dev-zhwu-gcp-9ce1-head-54r7uvpg-compute",
+  "username":  "gcpuser",
+  "executable":  "/opt/conda/envs/gene/bin/python",
+  "codePathLocal":  "two-head.ipynb",
+  "cpu_count":  2,
+  "cpu_count_logical":  4,
+  "disk":  {
+    "/":  {
+      "total":  "270302793728",
+      "used":  "135643262976"
+    }
+  },
+  "memory":  {
+    "total":  "16785870848"
+  },
+  "cpu":  {
+    "count":  2,
+    "countLogical":  4
+  }
+}
