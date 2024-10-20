@@ -14,8 +14,8 @@ def load_data():
     # df = df[df.index.isin(non_zero_genes)]
     gene2value = df[['DEG']]
 
-    MCG_FEATURE_NAMES = ['2mo', '9mo', '18mo', '9mo-2mo', '18mo-9mo', '9mo/2mo', '18mo/9mo', 'old-young', 'old/young', 'distance']
-    ATAC_FEATURE_NAMES = ['log2(old/young)', 'distance']
+    MCG_FEATURE_NAMES = ['2mo', '9mo', '18mo', '9mo-2mo', '18mo-9mo', '9mo/2mo', '18mo/9mo', 'old-young', 'old/young', 'gene_length', 'distance']
+    ATAC_FEATURE_NAMES = ['log2(old/young)', 'gene_length', 'distance']
 
     # Process mcg data
     mcg = pd.read_csv('data/Oligo_NN.aDMR_gene.csv')
@@ -27,17 +27,17 @@ def load_data():
     mcg_feat['18mo-9mo'] = mcg_feat['18mo'] - mcg_feat['9mo']
     mcg_feat['9mo/2mo'] = mcg_feat['9mo'] / mcg_feat['2mo']
     mcg_feat['18mo/9mo'] = mcg_feat['18mo'] / mcg_feat['9mo']
+    mcg_feat['gene_length'] = mcg_feat['gene_end'] - mcg_feat['gene_start']
     mcg_feat.fillna(0, inplace=True)
     mcg_feat = mcg_feat[['gene', *MCG_FEATURE_NAMES]]
-    print(mcg_feat.head())
 
 
     atac = pd.read_csv('data/Oligo_NN.ATAC_gene.csv')
     atac_feat = atac
     atac_feat.rename(columns={'gene_name': 'gene'}, inplace=True)
     atac_feat['distance'] = (atac_feat['gene_start'] - atac_feat['start']).abs().astype(np.float64)
+    atac_feat['gene_length'] = atac_feat['gene_end'] - atac_feat['gene_start']
     atac_feat = atac_feat[['gene', *ATAC_FEATURE_NAMES]]
-    print(atac_feat.head())
 
     # print('mcg corr:', mcg_mean.corrwith(gene2value['DEG']))
     # print('atac corr:', atac_mean.corrwith(gene2value['DEG']))
@@ -58,7 +58,6 @@ def load_data():
     list_atac_feat = atac_feat.groupby('gene').apply(lambda x: x[ATAC_FEATURE_NAMES].values.tolist())
     list_atac_feat = list_atac_feat.reindex(index_order, fill_value=[[0] * len(ATAC_FEATURE_NAMES)])
     x_atac = list_atac_feat.values.tolist()
-    print(x_mcg[:10])
 
     y = gene2value.loc[list_mcg_feat.index]['DEG'].values.tolist()
     y = np.array([int(i) for i in y])
@@ -118,6 +117,7 @@ def normalize_features(train_data, test_data):
     max_dist = np.max(train_log_distances)
     train_normalized_distances = (train_log_distances - min_dist) / (max_dist - min_dist)
     test_normalized_distances = (test_log_distances - min_dist) / (max_dist - min_dist)
+    
     
     # Combine normalized features and distances
     def reconstruct_data(features, distances, original_data):
