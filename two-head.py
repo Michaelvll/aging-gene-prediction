@@ -16,8 +16,6 @@ print(f"Using device: {device}")
 if device.type == 'cpu':
     print("WARNING: CUDA is not available. Running on CPU may be slow.")
 
-wandb.init(project='gene')
-
 data = load_data()
 X_balanced, y_balanced = get_balanced_data(data)
 print(len(X_balanced['mcg']), len(X_balanced['atac']))
@@ -129,7 +127,6 @@ class DeviceDataLoader(DataLoader):
         return batch
 
 def train_combined_model(X_train_mcg, X_train_atac, y_train, X_test_mcg, X_test_atac, y_test, exp_name, model, lr, batch_size):
-    wandb.init(project='gene', group=exp_name)
     
     train_dataset = CombinedGeneDataset(X_train_mcg, X_train_atac, y_train)
     test_dataset = CombinedGeneDataset(X_test_mcg, X_test_atac, y_test)
@@ -221,7 +218,7 @@ if __name__ == "__main__":
     wandb_callback = WeightsAndBiasesCallback(metric_name="accuracy", wandb_kwargs={"project": "gene_hyperparameter_search"})
     
     study = optuna.create_study(direction="maximize", pruner=optuna.pruners.MedianPruner())
-    study.optimize(objective, n_trials=500, callbacks=[wandb_callback], n_jobs=100)
+    study.optimize(objective, n_trials=800, callbacks=[wandb_callback], n_jobs=400)
 
     print("Best trial:")
     trial = study.best_trial
