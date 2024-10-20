@@ -221,7 +221,7 @@ if __name__ == "__main__":
     wandb_callback = WeightsAndBiasesCallback(metric_name="accuracy", wandb_kwargs={"project": "gene_hyperparameter_search"})
     
     study = optuna.create_study(direction="maximize", pruner=optuna.pruners.MedianPruner())
-    study.optimize(objective, n_trials=500, callbacks=[wandb_callback], n_jobs=25)
+    study.optimize(objective, n_trials=500, callbacks=[wandb_callback], n_jobs=100)
 
     print("Best trial:")
     trial = study.best_trial
