@@ -10,6 +10,20 @@ import wandb
 import optuna
 from optuna.integration import WeightsAndBiasesCallback
 
+from optuna.storages import RDBStorage
+
+# Create a directory for the database if it doesn't exist
+os.makedirs("optuna_db", exist_ok=True)
+
+# Create an RDBStorage object
+storage = RDBStorage(
+    url="sqlite:///optuna_db/gene_study.db",
+    engine_kwargs={"connect_args": {"timeout": 30}}
+)
+
+
+wandb.init(project='gene')
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
@@ -127,7 +141,7 @@ class DeviceDataLoader(DataLoader):
         return batch
 
 def train_combined_model(X_train_mcg, X_train_atac, y_train, X_test_mcg, X_test_atac, y_test, exp_name, model, lr, batch_size):
-    
+    wandb.init(project='gene', name=exp_name)
     train_dataset = CombinedGeneDataset(X_train_mcg, X_train_atac, y_train)
     test_dataset = CombinedGeneDataset(X_test_mcg, X_test_atac, y_test)
     train_loader = DeviceDataLoader(train_dataset, device, batch_size=batch_size, shuffle=True, collate_fn=combined_collate_fn, pin_memory=True)
@@ -217,7 +231,14 @@ if __name__ == "__main__":
 
     wandb_callback = WeightsAndBiasesCallback(metric_name="accuracy", wandb_kwargs={"project": "gene_hyperparameter_search"})
     
-    study = optuna.create_study(direction="maximize", pruner=optuna.pruners.MedianPruner())
+    # Create the study with the persistent storage
+    study = optuna.create_study(
+        study_name="gene_optimization",
+        direction="maximize",
+        pruner=optuna.pruners.MedianPruner(),
+        storage=storage,
+        load_if_exists=True
+    )
     study.optimize(objective, n_trials=800, callbacks=[wandb_callback], n_jobs=400)
 
     print("Best trial:")
