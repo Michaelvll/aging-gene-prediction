@@ -13,10 +13,10 @@ def load_data():
     # df = df[df.index.isin(non_zero_genes)]
     gene2value = df[['DEG']]
 
-    MCG_FEATURE_NAMES = ['2mo', '9mo', '18mo', 'log2(9mo-2mo)', 'log2(18mo-9mo)', 'log2(18mo-2mo)', 'log2(gene_length)', 'log2(r_length)', 'log2(r_length/gene_length)', 'log2(distance)']
+    MCG_FEATURE_NAMES = ['2mo', '9mo', '18mo', '9mo-2mo', '18mo-9mo', '18mo-2mo', 'log2(gene_length)', 'log2(r_length)', 'log2(r_length/gene_length)', 'log2(distance)']
+    GENEBODY_FEATURE_NAMES = ['8wk', '9mo', '18mo', '9mo-8wk', '18mo-9mo', '18mo-8wk', 'log2(gene_length)']
     ATAC_FEATURE_NAMES = ['2mo', '9mo', '18mo', 'log2(9mo/2mo)', 'log2(18mo/9mo)', 'log2(18mo/2mo)', 'log2(gene_length)', 'log2(r_length)', 'log2(r_length/gene_length)', 'log2(distance)']
     HIC_FEATURE_NAMES = ['2mo', '9mo', '18mo', 'log2(9mo/2mo)', 'log2(18mo/9mo)', 'log2(18mo/2mo)', 'log2(gene_length)', 'log2(a_length)', 'log2(a_length/gene_length)']
-    GENEBODY_FEATURE_NAMES = ['8wk', '9mo', '18mo', 'log2(9mo-8wk)', 'log2(18mo-9mo)', 'log2(18mo-8wk)', 'log2(gene_length)']
 
     DATA_FEATURE_NAMES = {
         'mcg': MCG_FEATURE_NAMES,
@@ -30,9 +30,9 @@ def load_data():
     mcg = pd.read_csv('data/Oligo_NN.aDMR_gene.csv')
     mcg_feat = mcg
     mcg_feat.rename(columns={'gene_name': 'gene'}, inplace=True)
-    mcg_feat['log2(9mo-2mo)'] = np.log2(mcg_feat['9mo'] - mcg_feat['2mo'])
-    mcg_feat['log2(18mo-9mo)'] = np.log2(mcg_feat['18mo'] - mcg_feat['9mo'])
-    mcg_feat['log2(18mo-2mo)'] = np.log2(mcg_feat['18mo'] - mcg_feat['2mo'])
+    mcg_feat['9mo-2mo'] = mcg_feat['9mo'] - mcg_feat['2mo']
+    mcg_feat['18mo-9mo'] = mcg_feat['18mo'] - mcg_feat['9mo']
+    mcg_feat['18mo-2mo'] = mcg_feat['18mo'] - mcg_feat['2mo']
     mcg_feat['log2(gene_length)'] = np.log2((mcg_feat['gene_end'] - mcg_feat['gene_start']).abs().astype(np.float64))
     mcg_feat['log2(r_length)'] = np.log2((mcg_feat['end'] - mcg_feat['start']).abs().astype(np.float64))
     mcg_feat['log2(r_length/gene_length)'] = mcg_feat['log2(r_length)'] - mcg_feat['log2(gene_length)']
@@ -44,9 +44,9 @@ def load_data():
     genebody = pd.read_csv('data/Oligo_NN.mcg_genebody_gene.csv')
     genebody_feat = genebody
     genebody_feat.rename(columns={'gene_name': 'gene'}, inplace=True)
-    genebody_feat['log2(9mo-8wk)'] = np.log2(genebody_feat['9mo'] - genebody_feat['8wk'])
-    genebody_feat['log2(18mo-9mo)'] = np.log2(genebody_feat['18mo'] - genebody_feat['9mo'])
-    genebody_feat['log2(18mo-8wk)'] = np.log2(genebody_feat['18mo'] - genebody_feat['8wk'])
+    genebody_feat['9mo-8wk'] = genebody_feat['9mo'] - genebody_feat['8wk']
+    genebody_feat['18mo-9mo'] = genebody_feat['18mo'] - genebody_feat['9mo']
+    genebody_feat['18mo-8wk'] = genebody_feat['18mo'] - genebody_feat['8wk']
     genebody_feat['log2(gene_length)'] = np.log2(genebody_feat['gene_length'])
     genebody_feat = genebody_feat[['gene', *GENEBODY_FEATURE_NAMES]]
     DATA['genebody'] = genebody_feat
