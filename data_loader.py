@@ -55,9 +55,9 @@ def load_data():
     atac = pd.read_csv('data/Oligo_NN.ATAC_gene.csv')
     atac_feat = atac
     atac_feat.rename(columns={'gene_name': 'gene'}, inplace=True)
-    atac_feat['log2(9mo/2mo)'] = np.log2(atac_feat['9mo'] / atac_feat['2mo'])
-    atac_feat['log2(18mo/9mo)'] = np.log2(atac_feat['18mo'] / atac_feat['9mo'])
-    atac_feat['log2(18mo/2mo)'] = np.log2(atac_feat['18mo'] / atac_feat['2mo'])
+    atac_feat['log2(9mo/2mo)'] = np.log2(atac_feat['9mo'] / (atac_feat['2mo']+1e-5))
+    atac_feat['log2(18mo/9mo)'] = np.log2(atac_feat['18mo'] / (atac_feat['9mo']+1e-5))
+    atac_feat['log2(18mo/2mo)'] = np.log2(atac_feat['18mo'] / (atac_feat['2mo']+1e-5))
     atac_feat['log2(gene_length)'] = np.log2((atac_feat['gene_end'] - atac_feat['gene_start']).abs().astype(np.float64))
     atac_feat['log2(r_length)'] = np.log2((atac_feat['end'] - atac_feat['start']).abs().astype(np.float64))
     atac_feat['log2(r_length/gene_length)'] = atac_feat['log2(r_length)'] - atac_feat['log2(gene_length)']
@@ -69,11 +69,11 @@ def load_data():
     hic = pd.read_csv('data/Oligo_NN.loop_gene.csv', sep='\t')
     hic_feat = hic
     hic_feat.rename(columns={'gene_name': 'gene'}, inplace=True)
-    hic_feat['log2(9mo/2mo)'] = np.log2(hic_feat['9mo'] / hic_feat['2mo'])
-    hic_feat['log2(18mo/9mo)'] = np.log2(hic_feat['18mo'] / hic_feat['9mo'])
-    hic_feat['log2(18mo/2mo)'] = np.log2(hic_feat['18mo'] / hic_feat['2mo'])
-    hic_feat['log2(gene_length)'] = np.log2((hic_feat['gene_end'] - hic_feat['gene_start']).abs().astype(np.float64))
-    hic_feat['log2(a_length)'] = np.log2((hic_feat['anchor2_start'] - hic_feat['anchor1_start']).abs().astype(np.float64))
+    hic_feat['log2(9mo/2mo)'] = np.log2((hic_feat['9mo']+1e-5) / (hic_feat['2mo']+1e-5))
+    hic_feat['log2(18mo/9mo)'] = np.log2((hic_feat['18mo']+1e-5) / (hic_feat['9mo']+1e-5))
+    hic_feat['log2(18mo/2mo)'] = np.log2((hic_feat['18mo']+1e-5) / (hic_feat['2mo']+1e-5))
+    hic_feat['log2(gene_length)'] = np.log2((hic_feat['gene_end'] - hic_feat['gene_start']).abs().astype(np.float64) + 1e-5)
+    hic_feat['log2(a_length)'] = np.log2((hic_feat['anchor2_start'] - hic_feat['anchor1_start']).abs().astype(np.float64) + 1e-5)
     hic_feat['log2(a_length/gene_length)'] = hic_feat['log2(a_length)'] - hic_feat['log2(gene_length)']
     hic_feat = hic_feat[['gene', *HIC_FEATURE_NAMES]]
     DATA['hic'] = hic_feat
