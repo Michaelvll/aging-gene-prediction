@@ -5,7 +5,6 @@ import wandb
 wandb.init(project='gene')
 
 def load_data():
-    data = {}
     df = pd.read_csv('data/Oligo_NN.RNA_DEG.csv')
     df.set_index('gene', inplace=True)
 
@@ -14,30 +13,71 @@ def load_data():
     # df = df[df.index.isin(non_zero_genes)]
     gene2value = df[['DEG']]
 
-    MCG_FEATURE_NAMES = ['2mo', '9mo', '18mo', '9mo-2mo', '18mo-9mo', '9mo/2mo', '18mo/9mo', 'old-young', 'old/young', 'gene_length', 'distance']
-    ATAC_FEATURE_NAMES = ['log2(old/young)', 'gene_length', 'distance']
+    MCG_FEATURE_NAMES = ['2mo', '9mo', '18mo', 'log2(9mo-2mo)', 'log2(18mo-9mo)', 'log2(18mo-2mo)', 'log2(gene_length)', 'log2(r_length)', 'log2(r_length/gene_length)', 'log2(distance)']
+    ATAC_FEATURE_NAMES = ['2mo', '9mo', '18mo', 'log2(9mo/2mo)', 'log2(18mo/9mo)', 'log2(18mo/2mo)', 'log2(gene_length)', 'log2(r_length)', 'log2(r_length/gene_length)', 'log2(distance)']
+    HIC_FEATURE_NAMES = ['2mo', '9mo', '18mo', 'log2(9mo/2mo)', 'log2(18mo/9mo)', 'log2(18mo/2mo)', 'log2(gene_length)', 'log2(a_length)', 'log2(a_length/gene_length)']
+    GENEBODY_FEATURE_NAMES = ['8wk', '9mo', '18mo', 'log2(9mo-8wk)', 'log2(18mo-9mo)', 'log2(18mo-8wk)', 'log2(gene_length)']
+
+    DATA_FEATURE_NAMES = {
+        'mcg': MCG_FEATURE_NAMES,
+        'atac': ATAC_FEATURE_NAMES,
+        'hic': HIC_FEATURE_NAMES,
+        'genebody': GENEBODY_FEATURE_NAMES
+    }
+    DATA = {}
 
     # Process mcg data
     mcg = pd.read_csv('data/Oligo_NN.aDMR_gene.csv')
     mcg_feat = mcg
     mcg_feat.rename(columns={'gene_name': 'gene'}, inplace=True)
-    mcg_feat['distance'] = (mcg_feat['gene_start'] - mcg_feat['start']).abs().astype(np.float64)
-    mcg_feat['old/young'] = mcg_feat['18mo'] / mcg_feat['2mo']
-    mcg_feat['9mo-2mo'] = mcg_feat['9mo'] - mcg_feat['2mo']
-    mcg_feat['18mo-9mo'] = mcg_feat['18mo'] - mcg_feat['9mo']
-    mcg_feat['9mo/2mo'] = mcg_feat['9mo'] / mcg_feat['2mo']
-    mcg_feat['18mo/9mo'] = mcg_feat['18mo'] / mcg_feat['9mo']
-    mcg_feat['gene_length'] = mcg_feat['gene_end'] - mcg_feat['gene_start']
-    mcg_feat.fillna(0, inplace=True)
+    mcg_feat['log2(9mo-2mo)'] = np.log2(mcg_feat['9mo'] - mcg_feat['2mo'])
+    mcg_feat['log2(18mo-9mo)'] = np.log2(mcg_feat['18mo'] - mcg_feat['9mo'])
+    mcg_feat['log2(18mo-2mo)'] = np.log2(mcg_feat['18mo'] - mcg_feat['2mo'])
+    mcg_feat['log2(gene_length)'] = np.log2((mcg_feat['gene_end'] - mcg_feat['gene_start']).abs().astype(np.float64))
+    mcg_feat['log2(r_length)'] = np.log2((mcg_feat['end'] - mcg_feat['start']).abs().astype(np.float64))
+    mcg_feat['log2(r_length/gene_length)'] = mcg_feat['log2(r_length)'] - mcg_feat['log2(gene_length)']
+    mcg_feat['log2(distance)'] = np.log2((mcg_feat['gene_start'] - mcg_feat['start']).abs().astype(np.float64))
     mcg_feat = mcg_feat[['gene', *MCG_FEATURE_NAMES]]
+    DATA['mcg'] = mcg_feat
+    print('Processed mcg data')
 
+    genebody = pd.read_csv('data/Oligo_NN.mcg_genebody_gene.csv')
+    genebody_feat = genebody
+    genebody_feat.rename(columns={'gene_name': 'gene'}, inplace=True)
+    genebody_feat['log2(9mo-8wk)'] = np.log2(genebody_feat['9mo'] - genebody_feat['8wk'])
+    genebody_feat['log2(18mo-9mo)'] = np.log2(genebody_feat['18mo'] - genebody_feat['9mo'])
+    genebody_feat['log2(18mo-8wk)'] = np.log2(genebody_feat['18mo'] - genebody_feat['8wk'])
+    genebody_feat['log2(gene_length)'] = np.log2(genebody_feat['gene_length'])
+    genebody_feat = genebody_feat[['gene', *GENEBODY_FEATURE_NAMES]]
+    DATA['genebody'] = genebody_feat
+    print('Processed genebody data')
 
     atac = pd.read_csv('data/Oligo_NN.ATAC_gene.csv')
     atac_feat = atac
     atac_feat.rename(columns={'gene_name': 'gene'}, inplace=True)
-    atac_feat['distance'] = (atac_feat['gene_start'] - atac_feat['start']).abs().astype(np.float64)
-    atac_feat['gene_length'] = atac_feat['gene_end'] - atac_feat['gene_start']
+    atac_feat['log2(9mo/2mo)'] = np.log2(atac_feat['9mo'] / atac_feat['2mo'])
+    atac_feat['log2(18mo/9mo)'] = np.log2(atac_feat['18mo'] / atac_feat['9mo'])
+    atac_feat['log2(18mo/2mo)'] = np.log2(atac_feat['18mo'] / atac_feat['2mo'])
+    atac_feat['log2(gene_length)'] = np.log2((atac_feat['gene_end'] - atac_feat['gene_start']).abs().astype(np.float64))
+    atac_feat['log2(r_length)'] = np.log2((atac_feat['end'] - atac_feat['start']).abs().astype(np.float64))
+    atac_feat['log2(r_length/gene_length)'] = atac_feat['log2(r_length)'] - atac_feat['log2(gene_length)']
+    atac_feat['log2(distance)'] = np.log2((atac_feat['gene_start'] - atac_feat['start']).abs().astype(np.float64))
     atac_feat = atac_feat[['gene', *ATAC_FEATURE_NAMES]]
+    DATA['atac'] = atac_feat
+    print('Processed atac data')
+
+    hic = pd.read_csv('data/Oligo_NN.loop_gene.csv', sep='\t')
+    hic_feat = hic
+    hic_feat.rename(columns={'gene_name': 'gene'}, inplace=True)
+    hic_feat['log2(9mo/2mo)'] = np.log2(hic_feat['9mo'] / hic_feat['2mo'])
+    hic_feat['log2(18mo/9mo)'] = np.log2(hic_feat['18mo'] / hic_feat['9mo'])
+    hic_feat['log2(18mo/2mo)'] = np.log2(hic_feat['18mo'] / hic_feat['2mo'])
+    hic_feat['log2(gene_length)'] = np.log2((hic_feat['gene_end'] - hic_feat['gene_start']).abs().astype(np.float64))
+    hic_feat['log2(a_length)'] = np.log2((hic_feat['anchor2_start'] - hic_feat['anchor1_start']).abs().astype(np.float64))
+    hic_feat['log2(a_length/gene_length)'] = hic_feat['log2(a_length)'] - hic_feat['log2(gene_length)']
+    hic_feat = hic_feat[['gene', *HIC_FEATURE_NAMES]]
+    DATA['hic'] = hic_feat
+    print('Processed hic data')
 
     # print('mcg corr:', mcg_mean.corrwith(gene2value['DEG']))
     # print('atac corr:', atac_mean.corrwith(gene2value['DEG']))
@@ -50,23 +90,21 @@ def load_data():
     # Let's use a commonly used sequence prediction model for sentence classification
     # like LSTM or Transformer
 
+    X = {}
     # Step 1: Prepare the data
-    list_mcg_feat = mcg_feat.groupby('gene').apply(lambda x: x[MCG_FEATURE_NAMES].values.tolist())
-    list_mcg_feat = list_mcg_feat.reindex(index_order, fill_value=[[0] * len(MCG_FEATURE_NAMES)])
-    x_mcg = list_mcg_feat.values.tolist()
+    for feature_type, features in DATA.items():
+        feature_names = DATA_FEATURE_NAMES[feature_type]
+        list_feat = features.groupby('gene').apply(lambda x: x[feature_names].values.tolist())
+        list_feat = list_feat.reindex(index_order, fill_value=[[0] * len(feature_names)])
+        X[feature_type] = list_feat.values.tolist()
 
-    list_atac_feat = atac_feat.groupby('gene').apply(lambda x: x[ATAC_FEATURE_NAMES].values.tolist())
-    list_atac_feat = list_atac_feat.reindex(index_order, fill_value=[[0] * len(ATAC_FEATURE_NAMES)])
-    x_atac = list_atac_feat.values.tolist()
-
-    y = gene2value.loc[list_mcg_feat.index]['DEG'].values.tolist()
+    y = gene2value['DEG'].values.tolist()
     y = np.array([int(i) for i in y])
-    y[:10]
 
-    data['mcg'] = x_mcg
-    data['atac'] = x_atac
-    data['y'] = y
-    return data
+    return {
+        'y': y,
+        'X': X,
+    }
 
 
 def get_balanced_data(data):
@@ -86,8 +124,8 @@ def get_balanced_data(data):
 
     # Create balanced dataset
     X_balanced = {}
-    X_balanced['mcg'] = [data['mcg'][i] for i in sampled_indices]
-    X_balanced['atac'] = [data['atac'][i] for i in sampled_indices]
+    for feature_type, features in data['X'].items():
+        X_balanced[feature_type] = [features[i] for i in sampled_indices]
     y_balanced = data['y'][sampled_indices]
     return X_balanced, y_balanced
 
@@ -97,43 +135,31 @@ def normalize_features(train_data, test_data):
     # Flatten the lists for easier processing
     train_flat = [item for sublist in train_data for item in sublist]
     test_flat = [item for sublist in test_data for item in sublist]
-    feature_dim = len(train_flat[0])
-    # Separate features
-    train_other_features = np.array([item[:feature_dim-1] for item in train_flat])
-    train_distances = np.array([item[feature_dim-1] for item in train_flat])
-    test_other_features = np.array([item[:feature_dim-1] for item in test_flat])
-    test_distances = np.array([item[feature_dim-1] for item in test_flat])
     
-    # Normalize other features using min-max scaling based on train data
-    min_vals = np.min(train_other_features, axis=0)
-    max_vals = np.max(train_other_features, axis=0)
-    train_normalized_features = (train_other_features - min_vals) / (max_vals - min_vals)
-    test_normalized_features = (test_other_features - min_vals) / (max_vals - min_vals)
+    # Convert to numpy arrays
+    train_array = np.array(train_flat)
+    test_array = np.array(test_flat)
     
-    # Normalize distances using log transformation and then min-max scaling based on train data
-    train_log_distances = np.log1p(train_distances)
-    test_log_distances = np.log1p(test_distances)
-    min_dist = np.min(train_log_distances)
-    max_dist = np.max(train_log_distances)
-    train_normalized_distances = (train_log_distances - min_dist) / (max_dist - min_dist)
-    test_normalized_distances = (test_log_distances - min_dist) / (max_dist - min_dist)
+    # Normalize all features using min-max scaling based on train data
+    min_vals = np.min(train_array, axis=0)
+    max_vals = np.max(train_array, axis=0)
+    train_normalized = (train_array - min_vals) / (max_vals - min_vals)
+    test_normalized = (test_array - min_vals) / (max_vals - min_vals)
     
-    
-    # Combine normalized features and distances
-    def reconstruct_data(features, distances, original_data):
+    # Reconstruct the data structure
+    def reconstruct_data(normalized_array, original_data):
         normalized_data = []
         idx = 0
         for sublist in original_data:
             normalized_sublist = []
             for _ in sublist:
-                normalized_sublist.append(list(features[idx][:feature_dim-1]) + [distances[idx]])
+                normalized_sublist.append(normalized_array[idx].tolist())
                 idx += 1
             normalized_data.append(normalized_sublist)
         return normalized_data
     
-    train_normalized = reconstruct_data(train_normalized_features, train_normalized_distances, train_data)
-    test_normalized = reconstruct_data(test_normalized_features, test_normalized_distances, test_data)
+    train_normalized = reconstruct_data(train_normalized, train_data)
+    test_normalized = reconstruct_data(test_normalized, test_data)
     
     return train_normalized, test_normalized
-
 
