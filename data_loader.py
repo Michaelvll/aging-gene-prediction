@@ -1,8 +1,10 @@
 import pandas as pd
 import numpy as np
 
-import wandb
-wandb.init(project='gene')
+# import wandb
+# wandb.init(project='gene')
+
+
 
 def load_data():
     df = pd.read_csv('data/Oligo_NN.RNA_DEG.csv')
@@ -13,8 +15,9 @@ def load_data():
     # df = df[df.index.isin(non_zero_genes)]
     gene2value = df[['DEG']]
 
+    # df = df[df.index.isin(non_zero_genes)]
     MCG_FEATURE_NAMES = ['2mo', '9mo', '18mo', '9mo-2mo', '18mo-9mo', '18mo-2mo', 'log2(gene_length)', 'log2(r_length)', 'log2(r_length/gene_length)', 'log2(distance)']
-    GENEBODY_FEATURE_NAMES = ['8wk', '9mo', '18mo', '9mo-8wk', '18mo-9mo', '18mo-8wk', 'log2(gene_length)']
+    GENEBODY_FEATURE_NAMES = ['2mo', '9mo', '18mo', '9mo-2mo', '18mo-9mo', '18mo-2mo', 'log2(gene_length)','DMG']
     ATAC_FEATURE_NAMES = ['2mo', '9mo', '18mo', 'log2(9mo/2mo)', 'log2(18mo/9mo)', 'log2(18mo/2mo)', 'log2(gene_length)', 'log2(r_length)', 'log2(r_length/gene_length)', 'log2(distance)']
     HIC_FEATURE_NAMES = ['2mo', '9mo', '18mo', 'log2(9mo/2mo)', 'log2(18mo/9mo)', 'log2(18mo/2mo)', 'log2(gene_length)', 'log2(a_length)', 'log2(a_length/gene_length)']
 
@@ -35,23 +38,32 @@ def load_data():
     mcg_feat['18mo-2mo'] = mcg_feat['18mo'] - mcg_feat['2mo']
     mcg_feat['log2(gene_length)'] = np.log2((mcg_feat['gene_end'] - mcg_feat['gene_start']).abs().astype(np.float64))
     mcg_feat['log2(r_length)'] = np.log2((mcg_feat['end'] - mcg_feat['start']).abs().astype(np.float64))
-    mcg_feat['log2(r_length/gene_length)'] = mcg_feat['log2(r_length)'] - mcg_feat['log2(gene_length)']
+    mcg_feat['log2(r_length/gene_length)'] = np.log2((mcg_feat['end'] - mcg_feat['start'])/(mcg_feat['gene_end'] - mcg_feat['gene_start']))
     mcg_feat['log2(distance)'] = np.log2((mcg_feat['gene_start'] - mcg_feat['start']).abs().astype(np.float64))
     mcg_feat = mcg_feat[['gene', *MCG_FEATURE_NAMES]]
+
+    assert mcg_feat.isna().sum().sum() == 0
+    assert mcg_feat.isin([np.inf, -np.inf]).sum().sum() == 0
+
     DATA['mcg'] = mcg_feat
     print('Processed mcg data')
-
+    
     genebody = pd.read_csv('data/Oligo_NN.mcg_genebody_gene.csv')
     genebody_feat = genebody
     genebody_feat.rename(columns={'gene_name': 'gene'}, inplace=True)
-    genebody_feat['9mo-8wk'] = genebody_feat['9mo'] - genebody_feat['8wk']
+    genebody_feat['9mo-2mo'] = genebody_feat['9mo'] - genebody_feat['2mo']
     genebody_feat['18mo-9mo'] = genebody_feat['18mo'] - genebody_feat['9mo']
-    genebody_feat['18mo-8wk'] = genebody_feat['18mo'] - genebody_feat['8wk']
+    genebody_feat['18mo-2mo'] = genebody_feat['18mo'] - genebody_feat['2mo']
     genebody_feat['log2(gene_length)'] = np.log2(genebody_feat['gene_length'])
     genebody_feat = genebody_feat[['gene', *GENEBODY_FEATURE_NAMES]]
+
+    assert genebody_feat.isna().sum().sum() == 0
+    assert genebody_feat.isin([np.inf, -np.inf]).sum().sum() == 0
+
     DATA['genebody'] = genebody_feat
     print('Processed genebody data')
-
+    
+    
     atac = pd.read_csv('data/Oligo_NN.ATAC_gene.csv')
     atac_feat = atac
     atac_feat.rename(columns={'gene_name': 'gene'}, inplace=True)
@@ -63,27 +75,29 @@ def load_data():
     atac_feat['log2(r_length/gene_length)'] = atac_feat['log2(r_length)'] - atac_feat['log2(gene_length)']
     atac_feat['log2(distance)'] = np.log2((atac_feat['gene_start'] - atac_feat['start']).abs().astype(np.float64) + 1e-10)
     atac_feat = atac_feat[['gene', *ATAC_FEATURE_NAMES]]
+    #check if any na or inf 
+    assert atac_feat.isna().sum().sum() == 0
+    assert atac_feat.isin([np.inf, -np.inf]).sum().sum() == 0
     DATA['atac'] = atac_feat
     print('Processed atac data')
-
-    hic = pd.read_csv('data/Oligo_NN.loop_gene.csv', sep='\t')
+    
+    hic = pd.read_csv('data/Oligo_NN.loop_gene.csv')
     hic_feat = hic
     hic_feat.rename(columns={'gene_name': 'gene'}, inplace=True)
     hic_feat['log2(9mo/2mo)'] = np.log2(hic_feat['9mo']+1e-10) - np.log2(hic_feat['2mo']+1e-10)
     hic_feat['log2(18mo/9mo)'] = np.log2(hic_feat['18mo']+1e-10) - np.log2(hic_feat['9mo']+1e-10)
     hic_feat['log2(18mo/2mo)'] = np.log2(hic_feat['18mo']+1e-10) - np.log2(hic_feat['2mo']+1e-10)
     hic_feat['log2(gene_length)'] = np.log2((hic_feat['gene_end'] - hic_feat['gene_start']).abs().astype(np.float64) + 1e-10)
-    hic_feat['log2(a_length)'] = np.log2((hic_feat['anchor2_start'] - hic_feat['anchor1_start']).abs().astype(np.float64) + 1e-10)
+    hic_feat['log2(a_length)'] = np.log2((hic_feat['anchor2_start'] - hic_feat['anchor1_start']).abs().astype(np.float64) + 10000) #10000 i the loop resolution
     hic_feat['log2(a_length/gene_length)'] = hic_feat['log2(a_length)'] - hic_feat['log2(gene_length)']
     hic_feat = hic_feat[['gene', *HIC_FEATURE_NAMES]]
+    assert hic_feat.isna().sum().sum() == 0
+    assert hic_feat.isin([np.inf, -np.inf]).sum().sum() == 0
+
     DATA['hic'] = hic_feat
     print('Processed hic data')
 
-    # print('mcg corr:', mcg_mean.corrwith(gene2value['DEG']))
-    # print('atac corr:', atac_mean.corrwith(gene2value['DEG']))
     index_order = gene2value.index.tolist()
-
-
     # Train a sequence model on mcg_feat to predict gene2value['log2(old/young)']
     # Each gene has a sequence of 4 features, 2mo, 9mo, 18mo, old-young
     # The sequence length is not fixed, so we need to use a dynamic model
