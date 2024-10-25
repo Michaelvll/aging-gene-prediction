@@ -5,7 +5,6 @@ import numpy as np
 # wandb.init(project='gene')
 
 
-
 def load_data():
     df = pd.read_csv('data/Oligo_NN.RNA_DEG.csv')
     df.set_index('gene', inplace=True)
@@ -16,10 +15,13 @@ def load_data():
     gene2value = df[['DEG']]
 
     # df = df[df.index.isin(non_zero_genes)]
+# use all peak/loop, adding columns as pvalue, anova, 
     MCG_FEATURE_NAMES = ['2mo', '9mo', '18mo', '9mo-2mo', '18mo-9mo', '18mo-2mo', 'log2(gene_length)', 'log2(r_length)', 'log2(r_length/gene_length)', 'log2(distance)']
-    GENEBODY_FEATURE_NAMES = ['2mo', '9mo', '18mo', '9mo-2mo', '18mo-9mo', '18mo-2mo', 'log2(gene_length)','DMG','corrected_pvalue']
-    ATAC_FEATURE_NAMES = ['2mo', '9mo', '18mo', 'log2(9mo/2mo)', 'log2(18mo/9mo)', 'log2(18mo/2mo)', 'log2(gene_length)', 'log2(r_length)', 'log2(r_length/gene_length)', 'log2(distance)']
-    HIC_FEATURE_NAMES = ['2mo', '9mo', '18mo', 'log2(9mo/2mo)', 'log2(18mo/9mo)', 'log2(18mo/2mo)', 'log2(gene_length)', 'log2(a_length)', 'log2(a_length/gene_length)']
+    GENEBODY_FEATURE_NAMES = ['2mo', '9mo', '18mo', '9mo-2mo', '18mo-9mo', '18mo-2mo', 'log2(gene_length)','(9mo-2mo)*log2(gene_length)', '(18mo-2mo)*log2(gene_length)', '(18mo-9mo)*log2(gene_length)','DMG','corrected_pvalue']
+    ATAC_FEATURE_NAMES = ['2mo', '9mo', '18mo', 'log2(9mo/2mo)', 'log2(18mo/9mo)', 'log2(18mo/2mo)', 'log2(gene_length)', 'log2(r_length)', 'log2(r_length/gene_length)', 'log2(distance)','DAR']
+    HIC_FEATURE_NAMES = ['Qanova', 'Eanova', 'Tanova', '2mo.Q', '9mo.Q', '18mo.Q','2mo.T', '9mo.T', '18mo.T',
+                        '9mo-2mo.Q','18mo-9mo.Q', '18mo-2mo.Q', '9mo-2mo.T', '18mo-9mo.T', '18mo-2mo.T', 
+                        'log2(gene_length)', 'log2(a_length)', 'log2(a_length/gene_length)','Diff_Loop']
 
     DATA_FEATURE_NAMES = {
         'mcg': MCG_FEATURE_NAMES,
@@ -29,7 +31,6 @@ def load_data():
     }
     DATA = {}
 
-    # Process mcg data
     mcg = pd.read_csv('data/Oligo_NN.aDMR_gene.csv')
     mcg_feat = mcg
     mcg_feat.rename(columns={'gene_name': 'gene'}, inplace=True)
@@ -47,14 +48,22 @@ def load_data():
 
     DATA['mcg'] = mcg_feat
     print('Processed mcg data')
-    
+
+   
+        
     genebody = pd.read_csv('data/Oligo_NN.mcg_genebody_gene.csv')
     genebody_feat = genebody
     genebody_feat.rename(columns={'gene_name': 'gene'}, inplace=True)
     genebody_feat['9mo-2mo'] = genebody_feat['9mo'] - genebody_feat['2mo']
     genebody_feat['18mo-9mo'] = genebody_feat['18mo'] - genebody_feat['9mo']
     genebody_feat['18mo-2mo'] = genebody_feat['18mo'] - genebody_feat['2mo']
+
     genebody_feat['log2(gene_length)'] = np.log2(genebody_feat['gene_length'])
+
+    genebody_feat['(9mo-2mo)*log2(gene_length)'] = genebody_feat['9mo-2mo'] * genebody_feat['log2(gene_length)']
+    genebody_feat['(18mo-9mo)*log2(gene_length)'] = genebody_feat['18mo-9mo'] * genebody_feat['log2(gene_length)']
+    genebody_feat['(18mo-2mo)*log2(gene_length)'] = genebody_feat['18mo-2mo'] * genebody_feat['log2(gene_length)']
+
     genebody_feat = genebody_feat[['gene', *GENEBODY_FEATURE_NAMES]]
 
     assert genebody_feat.isna().sum().sum() == 0
@@ -71,22 +80,28 @@ def load_data():
     atac_feat['log2(18mo/9mo)'] = np.log2(atac_feat['18mo'] + 1e-10) - np.log2(atac_feat['9mo'] + 1e-10)
     atac_feat['log2(18mo/2mo)'] = np.log2(atac_feat['18mo'] + 1e-10) - np.log2(atac_feat['2mo'] + 1e-10)
     atac_feat['log2(gene_length)'] = np.log2((atac_feat['gene_end'] - atac_feat['gene_start']).abs().astype(np.float64) + 1e-10)
-    atac_feat['log2(r_length)'] = np.log2((atac_feat['end'] - atac_feat['start']).abs().astype(np.float64) + 1e-10)
+    atac_feat['log2(r_length)'] = np.log2((atac_feat['peak_end'] - atac_feat['peak_start']).abs().astype(np.float64) + 1e-10)
     atac_feat['log2(r_length/gene_length)'] = atac_feat['log2(r_length)'] - atac_feat['log2(gene_length)']
-    atac_feat['log2(distance)'] = np.log2((atac_feat['gene_start'] - atac_feat['start']).abs().astype(np.float64) + 1e-10)
+    atac_feat['log2(distance)'] = np.log2((atac_feat['gene_start'] - atac_feat['peak_start']).abs().astype(np.float64) + 1e-10)
     atac_feat = atac_feat[['gene', *ATAC_FEATURE_NAMES]]
     #check if any na or inf 
     assert atac_feat.isna().sum().sum() == 0
     assert atac_feat.isin([np.inf, -np.inf]).sum().sum() == 0
     DATA['atac'] = atac_feat
     print('Processed atac data')
+
     
-    hic = pd.read_csv('data/Oligo_NN.loop_gene.csv')
+    hic = pd.read_csv('data/Oligo_NN.loop_gene.csv.gz')
     hic_feat = hic
     hic_feat.rename(columns={'gene_name': 'gene'}, inplace=True)
-    hic_feat['log2(9mo/2mo)'] = np.log2(hic_feat['9mo']+1e-10) - np.log2(hic_feat['2mo']+1e-10)
-    hic_feat['log2(18mo/9mo)'] = np.log2(hic_feat['18mo']+1e-10) - np.log2(hic_feat['9mo']+1e-10)
-    hic_feat['log2(18mo/2mo)'] = np.log2(hic_feat['18mo']+1e-10) - np.log2(hic_feat['2mo']+1e-10)
+    hic_feat['9mo-2mo.Q'] = hic_feat['9mo.Q'] - hic_feat['2mo.Q']
+    hic_feat['18mo-9mo.Q'] = hic_feat['18mo.Q'] - hic_feat['9mo.Q']
+    hic_feat['18mo-2mo.Q'] = hic_feat['18mo.Q'] - hic_feat['2mo.Q']
+
+    hic_feat['9mo-2mo.T'] = hic_feat['9mo.T'] - hic_feat['2mo.T']
+    hic_feat['18mo-9mo.T'] = hic_feat['18mo.T'] - hic_feat['9mo.T']
+    hic_feat['18mo-2mo.T'] = hic_feat['18mo.T'] - hic_feat['2mo.T']
+
     hic_feat['log2(gene_length)'] = np.log2((hic_feat['gene_end'] - hic_feat['gene_start']).abs().astype(np.float64) + 1e-10)
     hic_feat['log2(a_length)'] = np.log2((hic_feat['anchor2_start'] - hic_feat['anchor1_start']).abs().astype(np.float64) + 10000) #10000 i the loop resolution
     hic_feat['log2(a_length/gene_length)'] = hic_feat['log2(a_length)'] - hic_feat['log2(gene_length)']
@@ -120,7 +135,6 @@ def load_data():
         'X': X,
     }
 
-
 def get_balanced_data(data):
     # Separate the data into zero and non-zero y values
     y = data['y']
@@ -130,7 +144,7 @@ def get_balanced_data(data):
 
     # Sample len(non_zero_indices) indices from each group
     n_samples = len(non_zero_indices)
-    sampled_zero_indices = np.random.choice(zero_indices, n_samples // 2, replace=False)
+    sampled_zero_indices = np.random.choice(zero_indices, n_samples // 3, replace=False)
     sampled_non_zero_indices = np.random.choice(non_zero_indices, n_samples, replace=False)
 
     # Combine the sampled indices
