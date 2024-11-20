@@ -4,24 +4,26 @@ import numpy as np
 # import wandb
 # wandb.init(project='gene')
 
+ct = 'DG_Glut'
 
 def load_data():
-    df = pd.read_csv('data/Oligo_NN.RNA_DEG.csv')
-    df.set_index('gene', inplace=True)
+    df = pd.read_csv(f'data/{ct}/{ct}.luisa_RNA_DEG.csv', index_col =0)
+    #df.set_index('gene', inplace=True)
 
     # non_zero_genes = df[df['DEG'] != 0].index
 
     # df = df[df.index.isin(non_zero_genes)]
     gene2value = df[['DEG']]
+    #gene2value = df[['-log10(fdr)','log2(old/young)', 'DEG']]
 
     # df = df[df.index.isin(non_zero_genes)]
-# use all peak/loop, adding columns as pvalue, anova, 
+# use all pleak/loop, adding columns as pvalue, anova, 
     MCG_FEATURE_NAMES = ['2mo', '9mo', '18mo', '9mo-2mo', '18mo-9mo', '18mo-2mo', 'log2(gene_length)', 'log2(r_length)', 'log2(r_length/gene_length)', 'log2(distance)']
-    GENEBODY_FEATURE_NAMES = ['2mo', '9mo', '18mo', '9mo-2mo', '18mo-9mo', '18mo-2mo', 'log2(gene_length)','(9mo-2mo)*log2(gene_length)', '(18mo-2mo)*log2(gene_length)', '(18mo-9mo)*log2(gene_length)','DMG','corrected_pvalue']
+    GENEBODY_FEATURE_NAMES = ['2mo', '9mo', '18mo', '9mo-2mo', '18mo-9mo', '18mo-2mo', 'log2(gene_length)','(9mo-2mo)*log2(gene_length)', 
+                            '(18mo-2mo)*log2(gene_length)', '(18mo-9mo)*log2(gene_length)','DMG','corrected_pvalue']
     ATAC_FEATURE_NAMES = ['2mo', '9mo', '18mo', 'log2(9mo/2mo)', 'log2(18mo/9mo)', 'log2(18mo/2mo)', 'log2(gene_length)', 'log2(r_length)', 'log2(r_length/gene_length)', 'log2(distance)','DAR']
-    HIC_FEATURE_NAMES = ['Qanova', 'Eanova', 'Tanova', '2mo.Q', '9mo.Q', '18mo.Q','2mo.T', '9mo.T', '18mo.T',
-                        '9mo-2mo.Q','18mo-9mo.Q', '18mo-2mo.Q', '9mo-2mo.T', '18mo-9mo.T', '18mo-2mo.T', 
-                        'log2(gene_length)', 'log2(a_length)', 'log2(a_length/gene_length)','Diff_Loop']
+    HIC_FEATURE_NAMES = [ 'Tanova', '2mo.Q', '9mo.Q', '18mo.Q','9mo-2mo.Q','18mo-9mo.Q', '18mo-2mo.Q',
+                         'log2(gene_length)', 'log2(a_length)', 'log2(a_length/gene_length)','Diff_Loop'] #'Qanova', 'Eanova',,'2mo.T', '9mo.T', '18mo.T','9mo-2mo.T', '18mo-9mo.T', '18mo-2mo.T', 
 
     DATA_FEATURE_NAMES = {
         'mcg': MCG_FEATURE_NAMES,
@@ -31,7 +33,7 @@ def load_data():
     }
     DATA = {}
 
-    mcg = pd.read_csv('data/Oligo_NN.aDMR_gene.csv')
+    mcg = pd.read_csv(f'data/{ct}/{ct}.aDMR_gene.csv')
     mcg_feat = mcg
     mcg_feat.rename(columns={'gene_name': 'gene'}, inplace=True)
     mcg_feat['9mo-2mo'] = mcg_feat['9mo'] - mcg_feat['2mo']
@@ -49,9 +51,8 @@ def load_data():
     DATA['mcg'] = mcg_feat
     print('Processed mcg data')
 
-   
-        
-    genebody = pd.read_csv('data/Oligo_NN.mcg_genebody_gene.csv')
+       
+    genebody = pd.read_csv(f'data/{ct}/{ct}.mCG_genebody_gene.csv')
     genebody_feat = genebody
     genebody_feat.rename(columns={'gene_name': 'gene'}, inplace=True)
     genebody_feat['9mo-2mo'] = genebody_feat['9mo'] - genebody_feat['2mo']
@@ -65,7 +66,8 @@ def load_data():
     genebody_feat['(18mo-2mo)*log2(gene_length)'] = genebody_feat['18mo-2mo'] * genebody_feat['log2(gene_length)']
 
     genebody_feat = genebody_feat[['gene', *GENEBODY_FEATURE_NAMES]]
-
+    genebody_feat= genebody_feat.dropna()
+    
     assert genebody_feat.isna().sum().sum() == 0
     assert genebody_feat.isin([np.inf, -np.inf]).sum().sum() == 0
 
@@ -73,7 +75,7 @@ def load_data():
     print('Processed genebody data')
     
     
-    atac = pd.read_csv('data/Oligo_NN.ATAC_gene.csv')
+    atac = pd.read_csv(f'data/{ct}/{ct}.peak_gene.csv')
     atac_feat = atac
     atac_feat.rename(columns={'gene_name': 'gene'}, inplace=True)
     atac_feat['log2(9mo/2mo)'] = np.log2(atac_feat['9mo'] + 1e-10) - np.log2(atac_feat['2mo'] + 1e-10)
@@ -91,7 +93,11 @@ def load_data():
     print('Processed atac data')
 
     
-    hic = pd.read_csv('data/Oligo_NN.loop_gene.csv.gz')
+    hic = pd.read_csv(f'data/{ct}/{ct}.Loop_gene.csv.gz')
+    hic.columns = ['chrom','anchor1_start','anchor1_end','chrom','anchor2_start','anchor2_end',
+                'Qanova','Eanova','Tanova','2mo.Q','9mo.Q','18mo.Q','2mo.T','9mo.T','18mo.T','Diff_Loop',
+                'gene_chrom','gene_start','gene_end','gene_id','strand','gene_name','gene_type']
+    #hic = pd.read_csv('data/Oligo_NN.diff_loop_gene.csv')
     hic_feat = hic
     hic_feat.rename(columns={'gene_name': 'gene'}, inplace=True)
     hic_feat['9mo-2mo.Q'] = hic_feat['9mo.Q'] - hic_feat['2mo.Q']
@@ -127,8 +133,10 @@ def load_data():
         list_feat = list_feat.reindex(index_order, fill_value=[[0] * len(feature_names)])
         X[feature_type] = list_feat.values.tolist()
 
-    y = gene2value['DEG'].values.tolist()
-    y = np.array([int(i) for i in y])
+    # y = gene2value['DEG'].values.tolist()
+    # y = np.array([int(i) for i in y])
+
+    y = gene2value.values
 
     return {
         'y': y,
@@ -138,13 +146,15 @@ def load_data():
 def get_balanced_data(data):
     # Separate the data into zero and non-zero y values
     y = data['y']
+    # zero_indices = np.where(y[:, 2] == 0)[0]
+    # non_zero_indices = np.where(y[:, 2] != 0)[0]
     zero_indices = np.where(y == 0)[0]
     non_zero_indices = np.where(y != 0)[0]
     print(f'zero: {len(zero_indices)}, non-zero: {len(non_zero_indices)}')
 
     # Sample len(non_zero_indices) indices from each group
     n_samples = len(non_zero_indices)
-    sampled_zero_indices = np.random.choice(zero_indices, n_samples // 3, replace=False)
+    sampled_zero_indices = np.random.choice(zero_indices, n_samples // 2, replace=False)
     sampled_non_zero_indices = np.random.choice(non_zero_indices, n_samples, replace=False)
 
     # Combine the sampled indices
@@ -154,13 +164,14 @@ def get_balanced_data(data):
     X_balanced = {}
     for feature_type, features in data['X'].items():
         X_balanced[feature_type] = [features[i] for i in sampled_indices]
-    y_balanced = data['y'][sampled_indices]
+    y_balanced = data['y'][sampled_indices, :]
     return X_balanced, y_balanced
 
 
 # Normalization function
 def normalize_features(train_data, test_data):
     # Flatten the lists for easier processing
+    # train data: [N, L, F] -> [N*L, F]
     train_flat = [item for sublist in train_data for item in sublist]
     test_flat = [item for sublist in test_data for item in sublist]
     
@@ -173,6 +184,8 @@ def normalize_features(train_data, test_data):
     max_vals = np.max(train_array, axis=0)
     train_normalized = (train_array - min_vals) / (max_vals - min_vals)
     test_normalized = (test_array - min_vals) / (max_vals - min_vals)
+    
+    assert np.all(max_vals - min_vals != 0), np.where(max_vals - min_vals == 0)
     
     # Reconstruct the data structure
     def reconstruct_data(normalized_array, original_data):
