@@ -4,87 +4,105 @@ import numpy as np
 # import wandb
 # wandb.init(project='gene')
 
-ct = 'DG_Glut'
+#ct = 'DG_Glut'
 
-def load_data():
-    df = pd.read_csv(f'data/{ct}/{ct}.luisa_RNA_DEG.csv', index_col =0)
+def load_data(ct):
+    df = pd.read_csv(f'ml_input/{ct}/{ct}.luisa_RNA_DEG.csv', index_col =0)
     #df.set_index('gene', inplace=True)
 
     # non_zero_genes = df[df['DEG'] != 0].index
-
     # df = df[df.index.isin(non_zero_genes)]
-    gene2value = df[['DEG']]
     #gene2value = df[['-log10(fdr)','log2(old/young)', 'DEG']]
+    gene2value = df[['DEG']]
 
     # df = df[df.index.isin(non_zero_genes)]
-# use all pleak/loop, adding columns as pvalue, anova, 
-    MCG_FEATURE_NAMES = ['2mo', '9mo', '18mo', '9mo-2mo', '18mo-9mo', '18mo-2mo', 'log2(gene_length)', 'log2(r_length)', 'log2(r_length/gene_length)', 'log2(distance)']
-    GENEBODY_FEATURE_NAMES = ['2mo', '9mo', '18mo', '9mo-2mo', '18mo-9mo', '18mo-2mo', 'log2(gene_length)','(9mo-2mo)*log2(gene_length)', 
-                            '(18mo-2mo)*log2(gene_length)', '(18mo-9mo)*log2(gene_length)','DMG','corrected_pvalue']
-    ATAC_FEATURE_NAMES = ['2mo', '9mo', '18mo', 'log2(9mo/2mo)', 'log2(18mo/9mo)', 'log2(18mo/2mo)', 'log2(gene_length)', 'log2(r_length)', 'log2(r_length/gene_length)', 'log2(distance)','DAR']
+    # use all pleak/loop, adding columns as pvalue, anova, 
+    DMR_FEATURE_NAMES = ['2mo', '9mo', '18mo', '9mo-2mo', '18mo-9mo', '18mo-2mo', 'log2(gene_length)', 'log2(r_length)', 'log2(r_length/gene_length)', 'log2(distance)']
+    CG_GENEBODY_FEATURE_NAMES = ['2mo', '9mo', '18mo', '9mo-2mo', '18mo-9mo', '18mo-2mo', 'log2(gene_length)','(9mo-2mo)*log2(gene_length)',  '(18mo-2mo)*log2(gene_length)', 
+                                '(18mo-9mo)*log2(gene_length)','DMG','pvalue']
+    CH_GENEBODY_FEATURE_NAMES = ['2mo', '9mo', '18mo', '9mo-2mo', '18mo-9mo', '18mo-2mo', 'log2(gene_length)','(9mo-2mo)*log2(gene_length)',  '(18mo-2mo)*log2(gene_length)', 
+                                '(18mo-9mo)*log2(gene_length)','DMG','pvalue']
+    ATAC_FEATURE_NAMES = ['2mo', '9mo', '18mo', 'log2(9mo/2mo)', 'log2(18mo/9mo)', 'log2(18mo/2mo)', 'log2(gene_length)', 'log2(distance)','DAR']
     HIC_FEATURE_NAMES = [ 'Tanova', '2mo.Q', '9mo.Q', '18mo.Q','9mo-2mo.Q','18mo-9mo.Q', '18mo-2mo.Q',
-                         'log2(gene_length)', 'log2(a_length)', 'log2(a_length/gene_length)','Diff_Loop'] #'Qanova', 'Eanova',,'2mo.T', '9mo.T', '18mo.T','9mo-2mo.T', '18mo-9mo.T', '18mo-2mo.T', 
+                         'log2(gene_length)', 'log2(anchor1_distance)','log2(anchor2_distance)','Diff_Loop'] #'Qanova', 'Eanova',,'2mo.T', '9mo.T', '18mo.T','9mo-2mo.T', '18mo-9mo.T', '18mo-2mo.T', 
+    ABC_DMR_NAMES = ['2mo.activity', '2mo.contact', '2mo.abc_score', '9mo.activity','9mo.contact', '9mo.abc_score', 
+                     '18mo.activity', '18mo.contact','18mo.abc_score', 'log2(eg_distance)','log2(gene_length)','log2(contact_distance)']
+    ABC_peak_NAMES = ['2mo.activity', '2mo.contact', '2mo.abc_score', '9mo.activity','9mo.contact', '9mo.abc_score', 
+                     '18mo.activity', '18mo.contact','18mo.abc_score', 'log2(eg_distance)','log2(gene_length)','log2(contact_distance)']
 
+    
+    
     DATA_FEATURE_NAMES = {
-        'mcg': MCG_FEATURE_NAMES,
+        'dmr': DMR_FEATURE_NAMES,
+        'mcg_genebody': CG_GENEBODY_FEATURE_NAMES,
+        'mch_genebody': CH_GENEBODY_FEATURE_NAMES,
         'atac': ATAC_FEATURE_NAMES,
-        'hic': HIC_FEATURE_NAMES,
-        'genebody': GENEBODY_FEATURE_NAMES
+        'hic_loop': HIC_FEATURE_NAMES,
+        'hic_abc_dmr':ABC_DMR_NAMES,
+        'hic_abc_peak':ABC_peak_NAMES 
     }
+
     DATA = {}
 
-    mcg = pd.read_csv(f'data/{ct}/{ct}.aDMR_gene.csv')
-    mcg_feat = mcg
-    mcg_feat.rename(columns={'gene_name': 'gene'}, inplace=True)
-    mcg_feat['9mo-2mo'] = mcg_feat['9mo'] - mcg_feat['2mo']
-    mcg_feat['18mo-9mo'] = mcg_feat['18mo'] - mcg_feat['9mo']
-    mcg_feat['18mo-2mo'] = mcg_feat['18mo'] - mcg_feat['2mo']
-    mcg_feat['log2(gene_length)'] = np.log2((mcg_feat['gene_end'] - mcg_feat['gene_start']).abs().astype(np.float64))
-    mcg_feat['log2(r_length)'] = np.log2((mcg_feat['end'] - mcg_feat['start']).abs().astype(np.float64))
-    mcg_feat['log2(r_length/gene_length)'] = np.log2((mcg_feat['end'] - mcg_feat['start'])/(mcg_feat['gene_end'] - mcg_feat['gene_start']))
-    mcg_feat['log2(distance)'] = np.log2((mcg_feat['gene_start'] - mcg_feat['start']).abs().astype(np.float64))
-    mcg_feat = mcg_feat[['gene', *MCG_FEATURE_NAMES]]
+    dmr = pd.read_csv(f'ml_input/{ct}/{ct}.aDMR_gene.csv')
+    dmr_feat = dmr
+    dmr_feat.rename(columns={'gene_name': 'gene'}, inplace=True)
+    dmr_feat['9mo-2mo'] = dmr_feat['9mo'] - dmr_feat['2mo']
+    dmr_feat['18mo-9mo'] = dmr_feat['18mo'] - dmr_feat['9mo']
+    dmr_feat['18mo-2mo'] = dmr_feat['18mo'] - dmr_feat['2mo']
+    dmr_feat['log2(gene_length)'] = np.log2((dmr_feat['gene_end'] - dmr_feat['gene_start']).abs().astype(np.float64))
+    dmr_feat['log2(r_length)'] = np.log2((dmr_feat['end'] - dmr_feat['start']).abs().astype(np.float64))
+    dmr_feat['log2(r_length/gene_length)'] = np.log2((dmr_feat['end'] - dmr_feat['start'])/(dmr_feat['gene_end'] - dmr_feat['gene_start']))
+    dmr_feat['log2(distance)'] = np.log2((dmr_feat['gene_start'] - dmr_feat['start']).abs().astype(np.float64))
+    dmr_feat = dmr_feat[['gene', *DMR_FEATURE_NAMES]]
+    assert dmr_feat.isna().sum().sum() == 0
+    assert dmr_feat.isin([np.inf, -np.inf]).sum().sum() == 0
+    DATA['dmr'] = dmr_feat
+    print('Processed dmr data')
 
-    assert mcg_feat.isna().sum().sum() == 0
-    assert mcg_feat.isin([np.inf, -np.inf]).sum().sum() == 0
-
-    DATA['mcg'] = mcg_feat
-    print('Processed mcg data')
-
-       
-    genebody = pd.read_csv(f'data/{ct}/{ct}.mCG_genebody_gene.csv')
-    genebody_feat = genebody
-    genebody_feat.rename(columns={'gene_name': 'gene'}, inplace=True)
-    genebody_feat['9mo-2mo'] = genebody_feat['9mo'] - genebody_feat['2mo']
-    genebody_feat['18mo-9mo'] = genebody_feat['18mo'] - genebody_feat['9mo']
-    genebody_feat['18mo-2mo'] = genebody_feat['18mo'] - genebody_feat['2mo']
-
-    genebody_feat['log2(gene_length)'] = np.log2(genebody_feat['gene_length'])
-
-    genebody_feat['(9mo-2mo)*log2(gene_length)'] = genebody_feat['9mo-2mo'] * genebody_feat['log2(gene_length)']
-    genebody_feat['(18mo-9mo)*log2(gene_length)'] = genebody_feat['18mo-9mo'] * genebody_feat['log2(gene_length)']
-    genebody_feat['(18mo-2mo)*log2(gene_length)'] = genebody_feat['18mo-2mo'] * genebody_feat['log2(gene_length)']
-
-    genebody_feat = genebody_feat[['gene', *GENEBODY_FEATURE_NAMES]]
-    genebody_feat= genebody_feat.dropna()
+    mcg_genebody = pd.read_csv(f'ml_input/{ct}/{ct}.mCG_genebody_gene.csv')
+    mcg_genebody_feat = mcg_genebody
+    mcg_genebody_feat.rename(columns={'gene_name': 'gene'}, inplace=True)
+    mcg_genebody_feat['9mo-2mo'] = mcg_genebody_feat['9mo'] - mcg_genebody_feat['2mo']
+    mcg_genebody_feat['18mo-9mo'] = mcg_genebody_feat['18mo'] - mcg_genebody_feat['9mo']
+    mcg_genebody_feat['18mo-2mo'] = mcg_genebody_feat['18mo'] - mcg_genebody_feat['2mo']
+    mcg_genebody_feat['log2(gene_length)'] = np.log2(mcg_genebody_feat['gene_length'])
+    mcg_genebody_feat['(9mo-2mo)*log2(gene_length)'] = mcg_genebody_feat['9mo-2mo'] * mcg_genebody_feat['log2(gene_length)']
+    mcg_genebody_feat['(18mo-9mo)*log2(gene_length)'] = mcg_genebody_feat['18mo-9mo'] * mcg_genebody_feat['log2(gene_length)']
+    mcg_genebody_feat['(18mo-2mo)*log2(gene_length)'] = mcg_genebody_feat['18mo-2mo'] * mcg_genebody_feat['log2(gene_length)']
+    mcg_genebody_feat = mcg_genebody_feat[['gene', *CG_GENEBODY_FEATURE_NAMES]]
+    mcg_genebody_feat= mcg_genebody_feat.dropna()
+    assert mcg_genebody_feat.isna().sum().sum() == 0
+    assert mcg_genebody_feat.isin([np.inf, -np.inf]).sum().sum() == 0
+    DATA['mcg_genebody'] = mcg_genebody_feat
+    print('Processed mCG genebody data')
     
-    assert genebody_feat.isna().sum().sum() == 0
-    assert genebody_feat.isin([np.inf, -np.inf]).sum().sum() == 0
+    mch_genebody = pd.read_csv(f'ml_input/{ct}/{ct}.mCH_genebody_gene.csv')
+    mch_genebody_feat = mch_genebody
+    mch_genebody_feat.rename(columns={'gene_name': 'gene'}, inplace=True)
+    mch_genebody_feat['9mo-2mo'] = mch_genebody_feat['9mo'] - mch_genebody_feat['2mo']
+    mch_genebody_feat['18mo-9mo'] = mch_genebody_feat['18mo'] - mch_genebody_feat['9mo']
+    mch_genebody_feat['18mo-2mo'] = mch_genebody_feat['18mo'] - mch_genebody_feat['2mo']
+    mch_genebody_feat['log2(gene_length)'] = np.log2(mch_genebody_feat['gene_length'])
+    mch_genebody_feat['(9mo-2mo)*log2(gene_length)'] = mch_genebody_feat['9mo-2mo'] * mch_genebody_feat['log2(gene_length)']
+    mch_genebody_feat['(18mo-9mo)*log2(gene_length)'] = mch_genebody_feat['18mo-9mo'] * mch_genebody_feat['log2(gene_length)']
+    mch_genebody_feat['(18mo-2mo)*log2(gene_length)'] = mch_genebody_feat['18mo-2mo'] * mch_genebody_feat['log2(gene_length)']
+    mch_genebody_feat = mch_genebody_feat[['gene', *CH_GENEBODY_FEATURE_NAMES]]
+    mch_genebody_feat= mch_genebody_feat.dropna()
+    assert mch_genebody_feat.isna().sum().sum() == 0
+    assert mch_genebody_feat.isin([np.inf, -np.inf]).sum().sum() == 0
+    DATA['mch_genebody'] = mch_genebody_feat
+    print('Processed mCH genebody data')
 
-    DATA['genebody'] = genebody_feat
-    print('Processed genebody data')
-    
-    
-    atac = pd.read_csv(f'data/{ct}/{ct}.peak_gene.csv')
+
+    atac = pd.read_csv(f'ml_input/{ct}/{ct}.peak_gene.csv')
     atac_feat = atac
     atac_feat.rename(columns={'gene_name': 'gene'}, inplace=True)
     atac_feat['log2(9mo/2mo)'] = np.log2(atac_feat['9mo'] + 1e-10) - np.log2(atac_feat['2mo'] + 1e-10)
     atac_feat['log2(18mo/9mo)'] = np.log2(atac_feat['18mo'] + 1e-10) - np.log2(atac_feat['9mo'] + 1e-10)
     atac_feat['log2(18mo/2mo)'] = np.log2(atac_feat['18mo'] + 1e-10) - np.log2(atac_feat['2mo'] + 1e-10)
     atac_feat['log2(gene_length)'] = np.log2((atac_feat['gene_end'] - atac_feat['gene_start']).abs().astype(np.float64) + 1e-10)
-    atac_feat['log2(r_length)'] = np.log2((atac_feat['peak_end'] - atac_feat['peak_start']).abs().astype(np.float64) + 1e-10)
-    atac_feat['log2(r_length/gene_length)'] = atac_feat['log2(r_length)'] - atac_feat['log2(gene_length)']
-    atac_feat['log2(distance)'] = np.log2((atac_feat['gene_start'] - atac_feat['peak_start']).abs().astype(np.float64) + 1e-10)
+    atac_feat['log2(distance)'] = np.log2(atac_feat['distance'] + 1e-10)
     atac_feat = atac_feat[['gene', *ATAC_FEATURE_NAMES]]
     #check if any na or inf 
     assert atac_feat.isna().sum().sum() == 0
@@ -92,34 +110,53 @@ def load_data():
     DATA['atac'] = atac_feat
     print('Processed atac data')
 
-    
-    hic = pd.read_csv(f'data/{ct}/{ct}.Loop_gene.csv.gz')
-    hic.columns = ['chrom','anchor1_start','anchor1_end','chrom','anchor2_start','anchor2_end',
-                'Qanova','Eanova','Tanova','2mo.Q','9mo.Q','18mo.Q','2mo.T','9mo.T','18mo.T','Diff_Loop',
-                'gene_chrom','gene_start','gene_end','gene_id','strand','gene_name','gene_type']
-    #hic = pd.read_csv('data/Oligo_NN.diff_loop_gene.csv')
+    hic = pd.read_csv(f'ml_input/{ct}/{ct}.Loop_gene.csv.gz')
     hic_feat = hic
     hic_feat.rename(columns={'gene_name': 'gene'}, inplace=True)
     hic_feat['9mo-2mo.Q'] = hic_feat['9mo.Q'] - hic_feat['2mo.Q']
     hic_feat['18mo-9mo.Q'] = hic_feat['18mo.Q'] - hic_feat['9mo.Q']
     hic_feat['18mo-2mo.Q'] = hic_feat['18mo.Q'] - hic_feat['2mo.Q']
-
     hic_feat['9mo-2mo.T'] = hic_feat['9mo.T'] - hic_feat['2mo.T']
     hic_feat['18mo-9mo.T'] = hic_feat['18mo.T'] - hic_feat['9mo.T']
     hic_feat['18mo-2mo.T'] = hic_feat['18mo.T'] - hic_feat['2mo.T']
+    hic_feat['log2(gene_length)'] = np.log2(hic_feat['gene_length'] )
+    hic_feat['log2(anchor1_distance)'] = np.log2(hic_feat['anchor1_distance'] + 10000) #10000 i the loop resolution
+    hic_feat['log2(anchor2_distance)'] = np.log2(hic_feat['anchor2_distance'] + 10000)
 
-    hic_feat['log2(gene_length)'] = np.log2((hic_feat['gene_end'] - hic_feat['gene_start']).abs().astype(np.float64) + 1e-10)
-    hic_feat['log2(a_length)'] = np.log2((hic_feat['anchor2_start'] - hic_feat['anchor1_start']).abs().astype(np.float64) + 10000) #10000 i the loop resolution
-    hic_feat['log2(a_length/gene_length)'] = hic_feat['log2(a_length)'] - hic_feat['log2(gene_length)']
     hic_feat = hic_feat[['gene', *HIC_FEATURE_NAMES]]
     assert hic_feat.isna().sum().sum() == 0
     assert hic_feat.isin([np.inf, -np.inf]).sum().sum() == 0
+    DATA['hic_loop'] = hic_feat
+    print('Processed hic loop data')
 
-    DATA['hic'] = hic_feat
-    print('Processed hic data')
+    abc_dmr = pd.read_csv(f'ml_input/{ct}/{ct}.abc_enhancer.DMR_gene.csv').fillna(0)
+    abc_dmr_feat = abc_dmr
+    abc_dmr_feat.rename(columns={'gene_name': 'gene'}, inplace=True)
+    abc_dmr_feat['log2(eg_distance)'] = np.log2(np.minimum(abs(abc_dmr_feat['start'] - abc_dmr_feat['gene_start']), abs(abc_dmr_feat['start'] - abc_dmr_feat['gene_end'])) + 10000)
+    abc_dmr_feat['log2(gene_length)'] = np.log2(abc_dmr_feat['gene_end'] - abc_dmr_feat['gene_start'])
+    abc_dmr_feat['log2(contact_distance)'] = np.log2(abs(abc_dmr_feat['end'] - abc_dmr_feat['start']) + 10000)
+    abc_dmr_feat = abc_dmr_feat[['gene', *ABC_DMR_NAMES]]
+    assert abc_dmr_feat.isna().sum().sum() == 0
+    assert abc_dmr_feat.isin([np.inf, -np.inf]).sum().sum() == 0
+    DATA['hic_abc_dmr'] = abc_dmr_feat
+    print('Processed hic_abc_dmr data')
+
+
+    abc_peak =  pd.read_csv(f'ml_input/{ct}/{ct}.abc_enhancer.peak_gene.csv').fillna(0)
+    abc_peak_feat = abc_peak
+    abc_peak_feat.rename(columns={'gene_name': 'gene'}, inplace=True)
+    abc_peak_feat['log2(eg_distance)'] = np.log2(np.minimum(abs(abc_peak_feat['start'] - abc_peak_feat['gene_start']), abs(abc_peak_feat['start'] - abc_peak_feat['gene_end'])) + 10000)
+    abc_peak_feat['log2(gene_length)'] = np.log2(abc_peak_feat['gene_end'] - abc_peak_feat['gene_start'])
+    abc_peak_feat['log2(contact_distance)'] = np.log2(abs(abc_peak_feat['end'] - abc_peak_feat['start']) + 10000)
+    abc_peak_feat = abc_peak_feat[['gene', *ABC_peak_NAMES]]
+    assert abc_peak_feat.isna().sum().sum() == 0
+    assert abc_peak_feat.isin([np.inf, -np.inf]).sum().sum() == 0
+    DATA['hic_abc_peak'] = abc_peak_feat
+    print('Processed hic_abc_peak data')
+
 
     index_order = gene2value.index.tolist()
-    # Train a sequence model on mcg_feat to predict gene2value['log2(old/young)']
+    # Train a sequence model on dmr_feat to predict gene2value['log2(old/young)']
     # Each gene has a sequence of 4 features, 2mo, 9mo, 18mo, old-young
     # The sequence length is not fixed, so we need to use a dynamic model
     # Let's use a commonly used sequence prediction model for sentence classification

@@ -1,0 +1,6 @@
+Input Notebook:  /home/qzeng_salk_edu/project/241018_pre_ml/gen_ml_input/notebooks/06.pre_hic_loop.ipynb
+Output Notebook: DG_Glut/06.pre_hic_loop.ipynb
+Working directory: DG_Glut
+Input notebook does not contain a cell with tag 'parameters'
+Executing:   0%|          | 0/22 [00:00<?, ?cell/s]Executing notebook with kernel: python3
+Executing:   5%|▍         | 1/22 [00:00<00:20,  1.04cell/s]Executing:   9%|▉         | 2/22 [00:01<00:17,  1.16cell/s]Executing:  27%|██▋       | 6/22 [00:02<00:05,  2.91cell/s]Executing:  32%|███▏      | 7/22 [00:05<00:12,  1.19cell/s]Executing:  41%|████      | 9/22 [00:10<00:20,  1.55s/cell]Executing:  45%|████▌     | 10/22 [00:15<00:28,  2.38s/cell]Executing:  50%|█████     | 11/22 [00:18<00:27,  2.46s/cell]Executing:  59%|█████▉    | 13/22 [00:20<00:16,  1.84s/cell]Executing:  64%|██████▎   | 14/22 [00:20<00:12,  1.53s/cell]Executing:  73%|███████▎  | 16/22 [00:21<00:05,  1.04cell/s]Executing:  77%|███████▋  | 17/22 [00:29<00:12,  2.57s/cell]Executing:  82%|████████▏ | 18/22 [00:38<00:16,  4.06s/cell]Executing: 100%|██████████| 22/22 [00:38<00:00,  1.76s/cell]
