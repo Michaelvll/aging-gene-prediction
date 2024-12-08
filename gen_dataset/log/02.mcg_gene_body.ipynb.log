@@ -1,0 +1,6 @@
+Input Notebook:  /home/qzeng_salk_edu/project/241018_pre_ml/gen_ml_input/notebooks/02.mcg_gene_body.ipynb
+Output Notebook: DG_Glut/02.mcg_gene_body.ipynb
+Working directory: DG_Glut
+Input notebook does not contain a cell with tag 'parameters'
+Executing:   0%|          | 0/9 [00:00<?, ?cell/s]Executing notebook with kernel: python3
+Executing:  11%|█         | 1/9 [00:01<00:09,  1.19s/cell]Executing:  22%|██▏       | 2/9 [00:01<00:04,  1.53cell/s]Executing:  56%|█████▌    | 5/9 [00:04<00:03,  1.07cell/s]Executing:  67%|██████▋   | 6/9 [00:04<00:02,  1.35cell/s]Executing:  78%|███████▊  | 7/9 [00:05<00:01,  1.63cell/s]Executing:  89%|████████▉ | 8/9 [00:05<00:00,  1.99cell/s]Executing: 100%|██████████| 9/9 [00:05<00:00,  1.61cell/s]
