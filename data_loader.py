@@ -27,11 +27,11 @@ ABC_peak_NAMES = ['2mo.activity', '2mo.contact', '2mo.abc_score', '9mo.activity'
 DATA_FEATURE_NAMES = {
     'dmr': DMR_FEATURE_NAMES,
     'mcg_genebody': CG_GENEBODY_FEATURE_NAMES,
-    # 'mch_genebody': CH_GENEBODY_FEATURE_NAMES,
+    'mch_genebody': CH_GENEBODY_FEATURE_NAMES,
     'atac': ATAC_FEATURE_NAMES,
     'hic_loop': HIC_FEATURE_NAMES,
-    # 'hic_abc_dmr':ABC_DMR_NAMES,
-    # 'hic_abc_peak':ABC_peak_NAMES 
+    'hic_abc_dmr':ABC_DMR_NAMES,
+    'hic_abc_peak':ABC_peak_NAMES 
 }
 
 DATA_FEATURE_NAMES_LIST = list(DATA_FEATURE_NAMES.keys())
