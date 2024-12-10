@@ -5,6 +5,194 @@ import numpy as np
 # wandb.init(project='gene')
 
 
+
+# Setting the default loaded features (This can be changed once the calculated features are added
+ENHANCER_DMR_FEATURES = ['9mo.2mo.activity_diff.mean', '18mo.2mo.activity_diff.mean', '18mo.9mo.activity_diff.mean', '9mo.2mo.contact_diff.mean',
+                         '18mo.2mo.contact_diff.mean', '18mo.9mo.contact_diff.mean', '9mo.2mo.abc_score_diff.mean', '18mo.2mo.abc_score_diff.mean',
+                         '18mo.9mo.abc_score_diff.mean', '9mo.2mo.activity_diff.max', '18mo.2mo.activity_diff.max', '18mo.9mo.activity_diff.max',
+                         '9mo.2mo.contact_diff.max', '18mo.2mo.contact_diff.max', '18mo.9mo.contact_diff.max', '9mo.2mo.abc_score_diff.max',
+                         '18mo.2mo.abc_score_diff.max', '18mo.9mo.abc_score_diff.max', '9mo.2mo.activity_diff.min', '18mo.2mo.activity_diff.min',
+                         '18mo.9mo.activity_diff.min', '9mo.2mo.contact_diff.min', '18mo.2mo.contact_diff.min', '18mo.9mo.contact_diff.min',
+                         '9mo.2mo.abc_score_diff.min', '18mo.2mo.abc_score_diff.min', '18mo.9mo.abc_score_diff.min']
+
+ENHANCER_PEAK_FEATURES = ['9mo.2mo.activity_diff.mean', '18mo.2mo.activity_diff.mean', '18mo.9mo.activity_diff.mean', '9mo.2mo.contact_diff.mean',
+                         '18mo.2mo.contact_diff.mean', '18mo.9mo.contact_diff.mean', '9mo.2mo.abc_score_diff.mean', '18mo.2mo.abc_score_diff.mean',
+                         '18mo.9mo.abc_score_diff.mean', '9mo.2mo.activity_diff.max', '18mo.2mo.activity_diff.max', '18mo.9mo.activity_diff.max',
+                         '9mo.2mo.contact_diff.max', '18mo.2mo.contact_diff.max', '18mo.9mo.contact_diff.max', '9mo.2mo.abc_score_diff.max',
+                         '18mo.2mo.abc_score_diff.max', '18mo.9mo.abc_score_diff.max', '9mo.2mo.activity_diff.min', '18mo.2mo.activity_diff.min',
+                         '18mo.9mo.activity_diff.min', '9mo.2mo.contact_diff.min', '18mo.2mo.contact_diff.min', '18mo.9mo.contact_diff.min',
+                         '9mo.2mo.abc_score_diff.min', '18mo.2mo.abc_score_diff.min', '18mo.9mo.abc_score_diff.min']
+
+
+DEFAULT_DATA_FEATURE_NAMES = {'enhancer_DMR' : ENHANCER_DMR_FEATURES,
+                             'enhancer_peak' : ENHANCER_PEAK_FEATURES,
+                              # 'DAR' : 'aDAR_gene.csv', 
+                              # 'DMR' : 'aDMR_gene.csv',
+                              # 'loops' : 'Loop_gene.csv.gz', 
+                              # 'mcg_genebody' : 'mCG_genebody_gene.csv', 
+                              # 'mch_genebody' : 'mCH_genebody_gene.csv', 
+                              # 'atac' : 'peak_gene.csv'
+                             }
+
+def load_data(y_val = "DEG", rna_type='luisa', data_filepath="data", ct="Oligo_NN", DATA_FEATURE_NAMES=DEFAULT_DATA_FEATURE_NAMES, na_cutoff = 0.5):
+    """
+    author: amit klein / rachel zeng
+    email: a3klein@ucsd.edu
+
+    y_val: DEG / logFC (for classification or regression), 
+    # rna_filepath: The filepath to the csv with RNA DEGs
+    rna_type: "luisa" / "in_house" 
+    data_filepath: filepath to the engineered feature csv files
+    ct: The Cell Type to return data for
+    DATA_FEATURE_NAMES: 
+        a dictionary with the keys as the data modalities to return and the values as the names of the features to return for that modality. 
+    na_cutoff  (int) : the ratio of missing values within a given feature to remove that feature from the resturned dataframe
+    """
+    # df = pd.read_csv(f'{data_filepath}/{ct}/{ct}.rna.csv', index_col=0)
+    if rna_type == "luisa": 
+        df = pd.read_csv(f'{data_filepath}/{ct}/{ct}.luisa_rna.csv', index_col=0)
+    elif rna_type == "in_house": 
+        df = pd.read_csv(f'{data_filepath}/{ct}/{ct}.inhouse_rna.csv', index_col=0)
+    else: 
+        raise(f"Invalid rna_type name {rna_type}")
+    
+    # df.set_index('gene', inplace=True)
+
+    if y_val == "DEG": 
+        gene2value = df[['DEG']]
+    elif y_val == "logFC": 
+        gene2value = df[['avg_log2FC']]
+
+    DATA = {}
+
+    for _feat, FEATURES in DATA_FEATURE_NAMES.items(): 
+        skip_bool = True
+        try: # Trying to read the filepath for the data
+            df_feat = pd.read_csv(f'{data_filepath}/{ct}/{ct}.{_feat}.csv')
+        except: 
+            skip_bool = False
+            print(f"No {_feat} data filepath for this cell type: {ct}, Skipping this data modality")
+            print(f"Missing Filepath: {data_filepath}/{ct}/{ct}.{_feat}.csv ")
+        if skip_bool: # Calculating all features and the subsetting only for the ones to keep (Can be improved?)
+            df_feat = df_feat[['gene_name', *FEATURES]]
+            
+            # Filtering out columns by nan ratio
+            cols_to_keep = df_feat.columns[df_feat.isna().sum() / df_feat.shape[0] < na_cutoff]
+            df_feat = df_feat[cols_to_keep].copy()
+            
+            # TODO: Fix this fillna thing when making the feature dataframes: 
+            df_feat = df_feat.fillna(0)
+            
+            # Checking that the features are valid
+            assert df_feat.isna().sum().sum() == 0
+            assert df_feat.isin([np.inf, -np.inf]).sum().sum() == 0
+    
+            # Adding MCG features to the data dictionary
+            DATA[_feat] = df_feat
+            print(f'Processed {_feat} data')
+
+    index_order = gene2value.index.tolist()
+
+    X = {}
+    # Step 1: Prepare the data
+    for feature_type, features in DATA.items():
+        feature_names = DATA_FEATURE_NAMES[feature_type]
+        # list_feat = features.groupby('gene').apply(lambda x: x[feature_names].values.tolist(), include_groups=False)
+        features = features.set_index('gene_name').reindex(index_order, fill_value = 0)
+        X[feature_type] = features
+
+
+    # handling Y
+    genes = gene2value.index.values.tolist()
+    if y_val == "DEG": 
+        y = gene2value['DEG'].values.tolist()
+        y = np.array([int(i) for i in y])
+        Y = gene2value['DEG'].astype(int)
+    elif y_val == "logFC": 
+        y = gene2value['log2(old/young)'].values.tolist()
+        y = np.array([float(i) for i in y])
+        Y = gene2value['log2(old/young)'].astype(float)
+
+    return {
+        'y': Y,
+        'X': X,
+    }
+
+
+
+def get_balanced_data(data, method=None, y_val='DEG'):
+    # Separate the data into zero and non-zero y values
+    y = data['y']
+    if y_val=='DEG': 
+        if method == 'balanced': 
+            zero_indices = np.where(y == 0)[0]
+            down_indices = np.where(y == -1)[0]
+            up_indices = np.where(y == 1)[0]
+            print(f'zero: {len(zero_indices)}, down: {len(down_indices)}, up: {len(up_indices)}')
+            # Sample len(non_zero_indices) indices from each group
+            n_samples = min(len(zero_indices), len(down_indices), len(up_indices))
+            sampled_zero_indices = np.random.choice(zero_indices, n_samples, replace=False)
+            sampled_down_indices = np.random.choice(down_indices, n_samples, replace=False)
+            sampled_up_indices = np.random.choice(up_indices, n_samples, replace=False)
+            # Combine the sampled indices
+            sampled_indices = np.concatenate([sampled_zero_indices, sampled_down_indices, sampled_up_indices])
+        else: 
+            zero_indices = np.where(y == 0)[0]
+            non_zero_indices = np.where(y != 0)[0]
+            print(f'zero: {len(zero_indices)}, non-zero: {len(non_zero_indices)}')
+        
+            # Sample len(non_zero_indices) indices from each group
+            n_samples = len(non_zero_indices)
+            sampled_zero_indices = np.random.choice(zero_indices, n_samples // 2, replace=False)
+            sampled_non_zero_indices = np.random.choice(non_zero_indices, n_samples, replace=False)
+        
+            # Combine the sampled indices
+            sampled_indices = np.concatenate([sampled_zero_indices, sampled_non_zero_indices])
+    elif y_val == 'logFC': 
+        pass
+
+    # Create balanced dataset
+    X_balanced = {}
+    for feature_type, features in data['X'].items():
+        X_balanced[feature_type] = [features[i] for i in sampled_indices]
+    y_balanced = data['y'][sampled_indices]
+    return X_balanced, y_balanced
+
+
+# Normalization function
+def normalize_features(train_data, test_data):
+    # Flatten the lists for easier processing
+    train_flat = [item for sublist in train_data for item in sublist]
+    test_flat = [item for sublist in test_data for item in sublist]
+    
+    # Convert to numpy arrays
+    train_array = np.array(train_flat)
+    test_array = np.array(test_flat)
+    
+    # Normalize all features using min-max scaling based on train data
+    min_vals = np.min(train_array, axis=0)
+    max_vals = np.max(train_array, axis=0)
+    train_normalized = (train_array - min_vals) / (max_vals - min_vals)
+    test_normalized = (test_array - min_vals) / (max_vals - min_vals)
+    
+    # Reconstruct the data structure
+    def reconstruct_data(normalized_array, original_data):
+        normalized_data = []
+        idx = 0
+        for sublist in original_data:
+            normalized_sublist = []
+            for _ in sublist:
+                normalized_sublist.append(normalized_array[idx].tolist())
+                idx += 1
+            normalized_data.append(normalized_sublist)
+        return normalized_data
+    
+    train_normalized = reconstruct_data(train_normalized, train_data)
+    test_normalized = reconstruct_data(test_normalized, test_data)
+    
+    return train_normalized, test_normalized
+
+
 # Setting the default loaded features (This can be changed once the calculated features are added
 DMR_FEATURE_NAMES = ['2mo', '9mo', '18mo', '9mo-2mo', '18mo-9mo', '18mo-2mo', 'log2(gene_length)', 'log2(r_length)', 'log2(r_length/gene_length)', 'log2(distance)']
 
@@ -18,7 +206,7 @@ ATAC_FEATURE_NAMES = ['2mo', '9mo', '18mo', 'log2(9mo/2mo)', 'log2(18mo/9mo)', '
 HIC_FEATURE_NAMES = [ 'Tanova', '2mo.Q', '9mo.Q', '18mo.Q','9mo-2mo.Q','18mo-9mo.Q', '18mo-2mo.Q',
                      'log2(gene_length)', 'log2(a_length)', 'log2(a_length/gene_length)','Diff_Loop'] #'Qanova', 'Eanova',,'2mo.T', '9mo.T', '18mo.T','9mo-2mo.T', '18mo-9mo.T', '18mo-2mo.T', 
 
-DEFAULT_DATA_FEATURE_NAMES = {
+OLD_DEFAULT_DATA_FEATURE_NAMES = {
     'dmr': DMR_FEATURE_NAMES,
     'atac': ATAC_FEATURE_NAMES,
     'hic': HIC_FEATURE_NAMES,
@@ -26,8 +214,7 @@ DEFAULT_DATA_FEATURE_NAMES = {
     'mch_genebody': MCH_GENEBODY_FEATURE_NAMES
 }
 
-
-def load_data(y_val = "DEG", filepath="data", ct="Oligo_NN", DATA_FEATURE_NAMES=DEFAULT_DATA_FEATURE_NAMES):
+def load_data_old(y_val = "DEG", filepath="data", ct="Oligo_NN", DATA_FEATURE_NAMES=OLD_DEFAULT_DATA_FEATURE_NAMES):
     df = pd.read_csv(f'{filepath}/{ct}/{ct}.luisa_RNA_DEG.csv', index_col=0)
     # df.set_index('gene', inplace=True)
 
@@ -235,76 +422,4 @@ def load_data(y_val = "DEG", filepath="data", ct="Oligo_NN", DATA_FEATURE_NAMES=
         'y': Y,
         'X': X,
     }
-
-def get_balanced_data(data, method=None, y_val='DEG'):
-    # Separate the data into zero and non-zero y values
-    y = data['y']
-    if y_val=='DEG': 
-        if method == 'balanced': 
-            zero_indices = np.where(y == 0)[0]
-            down_indices = np.where(y == -1)[0]
-            up_indices = np.where(y == 1)[0]
-            print(f'zero: {len(zero_indices)}, down: {len(down_indices)}, up: {len(up_indices)}')
-            # Sample len(non_zero_indices) indices from each group
-            n_samples = min(len(zero_indices), len(down_indices), len(up_indices))
-            sampled_zero_indices = np.random.choice(zero_indices, n_samples, replace=False)
-            sampled_down_indices = np.random.choice(down_indices, n_samples, replace=False)
-            sampled_up_indices = np.random.choice(up_indices, n_samples, replace=False)
-            # Combine the sampled indices
-            sampled_indices = np.concatenate([sampled_zero_indices, sampled_down_indices, sampled_up_indices])
-        else: 
-            zero_indices = np.where(y == 0)[0]
-            non_zero_indices = np.where(y != 0)[0]
-            print(f'zero: {len(zero_indices)}, non-zero: {len(non_zero_indices)}')
-        
-            # Sample len(non_zero_indices) indices from each group
-            n_samples = len(non_zero_indices)
-            sampled_zero_indices = np.random.choice(zero_indices, n_samples // 2, replace=False)
-            sampled_non_zero_indices = np.random.choice(non_zero_indices, n_samples, replace=False)
-        
-            # Combine the sampled indices
-            sampled_indices = np.concatenate([sampled_zero_indices, sampled_non_zero_indices])
-    elif y_val == 'logFC': 
-        pass
-
-    # Create balanced dataset
-    X_balanced = {}
-    for feature_type, features in data['X'].items():
-        X_balanced[feature_type] = [features[i] for i in sampled_indices]
-    y_balanced = data['y'][sampled_indices]
-    return X_balanced, y_balanced
-
-
-# Normalization function
-def normalize_features(train_data, test_data):
-    # Flatten the lists for easier processing
-    train_flat = [item for sublist in train_data for item in sublist]
-    test_flat = [item for sublist in test_data for item in sublist]
-    
-    # Convert to numpy arrays
-    train_array = np.array(train_flat)
-    test_array = np.array(test_flat)
-    
-    # Normalize all features using min-max scaling based on train data
-    min_vals = np.min(train_array, axis=0)
-    max_vals = np.max(train_array, axis=0)
-    train_normalized = (train_array - min_vals) / (max_vals - min_vals)
-    test_normalized = (test_array - min_vals) / (max_vals - min_vals)
-    
-    # Reconstruct the data structure
-    def reconstruct_data(normalized_array, original_data):
-        normalized_data = []
-        idx = 0
-        for sublist in original_data:
-            normalized_sublist = []
-            for _ in sublist:
-                normalized_sublist.append(normalized_array[idx].tolist())
-                idx += 1
-            normalized_data.append(normalized_sublist)
-        return normalized_data
-    
-    train_normalized = reconstruct_data(train_normalized, train_data)
-    test_normalized = reconstruct_data(test_normalized, test_data)
-    
-    return train_normalized, test_normalized
 
