@@ -46,10 +46,14 @@ def get_dmr_feat(ct):
     dmr_feat['18mo-9mo'] = dmr_feat['18mo'] - dmr_feat['9mo']
     dmr_feat['18mo-2mo'] = dmr_feat['18mo'] - dmr_feat['2mo']
     dmr_feat['log2(gene_length)'] = np.log2((dmr_feat['gene_end'] - dmr_feat['gene_start']).abs().astype(np.float64))
-    dmr_feat['log2(r_length)'] = np.log2((dmr_feat['end'] - dmr_feat['start']).abs().astype(np.float64))
-    dmr_feat['log2(r_length/gene_length)'] = np.log2((dmr_feat['end'] - dmr_feat['start'])/(dmr_feat['gene_end'] - dmr_feat['gene_start']))
-    dmr_feat['log2(distance)'] = np.log2((dmr_feat['gene_start'] - dmr_feat['start']).abs().astype(np.float64))
+    dmr_feat['log2(r_length)'] = np.log2((dmr_feat['end'] - dmr_feat['start']).abs().astype(np.float64) + 5)
+    dmr_feat['log2(r_length/gene_length)'] = np.log2((dmr_feat['end'] - dmr_feat['start'])/(dmr_feat['gene_end'] - dmr_feat['gene_start'])+5)
+    dmr_feat['log2(distance)'] = np.log2((dmr_feat['gene_start'] - dmr_feat['start']).abs().astype(np.float64)+ 5)
     dmr_feat = dmr_feat[['gene', *DMR_FEATURE_NAMES]]
+    # drop if inf
+    # dmr_feat= dmr_feat.replace([np.inf, -np.inf], np.nan)
+    # dmr_feat= dmr_feat.dropna()
+
     assert dmr_feat.isna().sum().sum() == 0
     assert dmr_feat.isin([np.inf, -np.inf]).sum().sum() == 0
     print('Processed dmr data')
@@ -237,6 +241,44 @@ def load_data(ct):
         'X': X,
     }
 
+def get_balanced_data_by_samllest_group(data):
+    # Separate the data into zero and non-zero y values
+    y = data['y']
+    # zero_indices = np.where(y[:, 2] == 0)[0]
+    # non_zero_indices = np.where(y[:, 2] != 0)[0]
+    zero_indices = np.where(y == 0)[0]
+    up_indices = np.where(y == 1)[0]
+    down_indices = np.where(y == -1)[0]
+    print(f'zero: {len(zero_indices)}, up: {len(up_indices)},down: {len(down_indices)}')
+
+    # get the samllest group and sample the same amount from other two
+    min_len = min(len(zero_indices), len(up_indices), len(down_indices))
+    zero_indices = np.random.choice(zero_indices, min_len, replace=False)
+    up_indices = np.random.choice(up_indices, min_len, replace=False)
+    down_indices = np.random.choice(down_indices, min_len, replace=False)
+    # concat
+    sampled_indices = np.concatenate([zero_indices, up_indices, down_indices])
+
+    # Create balanced dataset
+    X_balanced = {}
+
+    print('Getting balanced data')
+    def index_features(feature_type):
+        features = data['X'][feature_type]
+        return [features[i] for i in sampled_indices]
+
+    with ThreadPoolExecutor() as executor:
+        # Submit all tasks and store futures
+        futures = {
+            feature_type: executor.submit(index_features, feature_type) 
+            for feature_type in data['X']
+        }
+        # Get results as they complete and store in X_balanced
+        for feature_type, future in futures.items():
+            X_balanced[feature_type] = future.result()
+    y_balanced = data['y'][sampled_indices, :]
+    return X_balanced, y_balanced
+
 def get_balanced_data(data):
     # Separate the data into zero and non-zero y values
     y = data['y']
@@ -273,6 +315,27 @@ def get_balanced_data(data):
             X_balanced[feature_type] = future.result()
     y_balanced = data['y'][sampled_indices, :]
     return X_balanced, y_balanced
+
+def concat_group_data(concat_cts):
+    y_balanced = []
+    X_balanced_list = []
+
+    for ct in concat_cts:
+        print()
+        data_tmp = load_data(ct=ct)
+        X_balanced_tmp, y_balanced_tmp = get_balanced_data_by_samllest_group(data_tmp)
+        y_balanced.append(y_balanced_tmp)
+        X_balanced_list.append(X_balanced_tmp)
+
+    y_balanced = np.concatenate(y_balanced)
+    X_balanced = defaultdict(list)
+
+    for feature_name in DATA_FEATURE_NAMES_LIST:
+        for i in range(len(concat_cts)):
+            X_balanced[feature_name] += X_balanced_list[i][feature_name]
+
+    return X_balanced, y_balanced
+
 
 
 # Normalization function
