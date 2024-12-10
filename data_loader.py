@@ -232,6 +232,7 @@ def load_data(ct):
     y = gene2value.values
 
     return {
+        'gene': index_order,
         'y': y,
         'X': X,
     }
