@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 from concurrent.futures import ThreadPoolExecutor
-
+from collections import defaultdict
 
 # import wandb
 # wandb.init(project='gene')
@@ -314,7 +314,8 @@ def get_balanced_data(data):
         for feature_type, future in futures.items():
             X_balanced[feature_type] = future.result()
     y_balanced = data['y'][sampled_indices, :]
-    return X_balanced, y_balanced
+    gene_list = [data['gene'][i] for i in sampled_indices]
+    return X_balanced, y_balanced, gene_list
 
 def concat_group_data(concat_cts):
     y_balanced = []
