@@ -277,7 +277,8 @@ def get_balanced_data_by_samllest_group(data):
         for feature_type, future in futures.items():
             X_balanced[feature_type] = future.result()
     y_balanced = data['y'][sampled_indices, :]
-    return X_balanced, y_balanced
+    gene_list = [data['gene'][i] for i in sampled_indices]
+    return X_balanced, y_balanced, gene_list
 
 def get_balanced_data(data):
     # Separate the data into zero and non-zero y values
@@ -317,25 +318,28 @@ def get_balanced_data(data):
     gene_list = [data['gene'][i] for i in sampled_indices]
     return X_balanced, y_balanced, gene_list
 
-def concat_group_data(concat_cts):
+def concat_group_data(concat_cts_str):
+    concat_cts = concat_cts_str.split(',')
     y_balanced = []
     X_balanced_list = []
+    gene_list = []
 
     for ct in concat_cts:
         print()
         data_tmp = load_data(ct=ct)
-        X_balanced_tmp, y_balanced_tmp = get_balanced_data_by_samllest_group(data_tmp)
-        y_balanced.append(y_balanced_tmp)
+        X_balanced_tmp, y_balanced_tmp, gene_list_tmp = get_balanced_data_by_samllest_group(data_tmp)
+        y_balanced.extend(y_balanced_tmp)
         X_balanced_list.append(X_balanced_tmp)
+        gene_list.extend([f'{ct}+{gene}' for gene in gene_list_tmp])
 
-    y_balanced = np.concatenate(y_balanced)
+    y_balanced = np.array(y_balanced)
     X_balanced = defaultdict(list)
 
     for feature_name in DATA_FEATURE_NAMES_LIST:
         for i in range(len(concat_cts)):
             X_balanced[feature_name] += X_balanced_list[i][feature_name]
 
-    return X_balanced, y_balanced
+    return X_balanced, y_balanced, gene_list
 
 
 
