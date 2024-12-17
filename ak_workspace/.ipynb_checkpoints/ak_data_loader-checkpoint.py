@@ -109,9 +109,9 @@ def load_data(y_val = "DEG", rna_type='luisa', data_filepath="data", ct="Oligo_N
         y = np.array([int(i) for i in y])
         Y = gene2value['DEG'].astype(int)
     elif y_val == "logFC": 
-        y = gene2value['log2(old/young)'].values.tolist()
+        y = gene2value['avg_log2FC'].values.tolist()
         y = np.array([float(i) for i in y])
-        Y = gene2value['log2(old/young)'].astype(float)
+        Y = gene2value['avg_log2FC'].astype(float)
 
     return {
         'y': Y,
@@ -143,7 +143,8 @@ def get_balanced_data(data, method=None, y_val='DEG'):
         
             # Sample len(non_zero_indices) indices from each group
             n_samples = len(non_zero_indices)
-            sampled_zero_indices = np.random.choice(zero_indices, n_samples // 2, replace=False)
+            # sampled_zero_indices = np.random.choice(zero_indices, n_samples // 2, replace=False)
+            sampled_zero_indices = np.random.choice(zero_indices, n_samples, replace=False)
             sampled_non_zero_indices = np.random.choice(non_zero_indices, n_samples, replace=False)
         
             # Combine the sampled indices
@@ -154,8 +155,8 @@ def get_balanced_data(data, method=None, y_val='DEG'):
     # Create balanced dataset
     X_balanced = {}
     for feature_type, features in data['X'].items():
-        X_balanced[feature_type] = [features[i] for i in sampled_indices]
-    y_balanced = data['y'][sampled_indices]
+        X_balanced[feature_type] = features.iloc[sampled_indices]
+    y_balanced = data['y'].iloc[sampled_indices]
     return X_balanced, y_balanced
 
 
