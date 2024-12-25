@@ -34,6 +34,17 @@ DEFAULT_DATA_FEATURE_NAMES = {'enhancer_DMR' : ENHANCER_DMR_FEATURES,
                               # 'atac' : 'peak_gene.csv'
                              }
 
+FEAT_MAP = {'meta': 'meta',
+            'enhancer_DMR' : 'enhancer_DMR',
+            'enhancer_peak' : 'enhancer_peak',
+            'DAR' : 'atac_DAR', 
+            'DMR' : 'mCG_DMR',
+            'loops' : 'hic_loops', 
+            'mcg_genebody' : 'mCG_genebody', 
+            'mch_genebody' : 'mCH_genebody', 
+            'atac' : 'atac_peaks'
+           }
+
 def load_data(y_val = "DEG", rna_type='luisa', data_filepath="data", ct="Oligo_NN", DATA_FEATURE_NAMES=DEFAULT_DATA_FEATURE_NAMES, na_cutoff = 0.5):
     """
     author: amit klein / rachel zeng
@@ -87,9 +98,9 @@ def load_data(y_val = "DEG", rna_type='luisa', data_filepath="data", ct="Oligo_N
             assert df_feat.isna().sum().sum() == 0
             assert df_feat.isin([np.inf, -np.inf]).sum().sum() == 0
     
-            # Adding MCG features to the data dictionary
+            # Adding features to the data dictionary
             DATA[_feat] = df_feat
-            print(f'Processed {_feat} data')
+            # print(f'Processed {_feat} data')
 
     index_order = gene2value.index.tolist()
 
@@ -99,6 +110,7 @@ def load_data(y_val = "DEG", rna_type='luisa', data_filepath="data", ct="Oligo_N
         feature_names = DATA_FEATURE_NAMES[feature_type]
         # list_feat = features.groupby('gene').apply(lambda x: x[feature_names].values.tolist(), include_groups=False)
         features = features.set_index('gene_name').reindex(index_order, fill_value = 0)
+        # X[FEAT_MAP[feature_type]] = features
         X[feature_type] = features
 
 
