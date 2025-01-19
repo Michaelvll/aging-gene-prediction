@@ -162,6 +162,16 @@ def get_abc_peak_feat(ct):
     print('Processed abc peak data')
     return abc_peak_feat
 
+def get_gene2chr(ct):
+    # TODO: We need to use a gene_name to chr mapping file instead of
+    # aDAR_gene.csv, as some genes do not present in aDAR_gene.csv
+    df = pd.read_csv(f'ml_input/{ct}/{ct}.aDAR_gene.csv')
+    gene2chr = df[['gene_name', 'chr']]
+    gene2chr.rename(columns={'gene_name': 'gene'}, inplace=True)
+    gene2chr.drop_duplicates(inplace=True)
+    gene2chr.set_index('gene', inplace=True)
+    return gene2chr
+
 def load_data(ct):
     df = pd.read_csv(f'ml_input/{ct}/{ct}.luisa_RNA_DEG.csv', index_col =0)
     #df.set_index('gene', inplace=True)
@@ -235,10 +245,16 @@ def load_data(ct):
 
     y = gene2value.values
 
+    gene_chr_df = get_gene2chr(ct)
+    chrs = gene_chr_df.reindex(index_order, fill_value=np.nan)
+    assert chrs.isna().sum().sum() == 0
+    chr_list = chrs.values.tolist()
+
     return {
         'gene': index_order,
         'y': y,
         'X': X,
+        'chr': chr_list
     }
 
 def get_balanced_data_by_samllest_group(data):
@@ -316,7 +332,8 @@ def get_balanced_data(data):
             X_balanced[feature_type] = future.result()
     y_balanced = data['y'][sampled_indices, :]
     gene_list = [data['gene'][i] for i in sampled_indices]
-    return X_balanced, y_balanced, gene_list
+    chr_list = [data['chr'][i] for i in sampled_indices]
+    return X_balanced, y_balanced, gene_list, chr_list
 
 def concat_group_data(concat_cts_str):
     concat_cts = concat_cts_str.split(',')
