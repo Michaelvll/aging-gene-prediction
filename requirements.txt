@@ -30,7 +30,7 @@ matplotlib-inline
 mpmath
 nest_asyncio
 networkx
-numpy
+numpy<2
 nvidia-cublas-cu12
 nvidia-cuda-cupti-cu12
 nvidia-cuda-nvrtc-cu12
@@ -63,6 +63,7 @@ pytz
 PyYAML
 pyzmq
 requests
+seaborn
 scikit-learn
 scipy
 sentry-sdk
