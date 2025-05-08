@@ -45,7 +45,8 @@ FEAT_MAP = {'meta': 'meta',
             'atac' : 'atac_peaks'
            }
 
-def load_data(y_val = "DEG", rna_type='luisa', data_filepath="data", ct="Oligo_NN", DATA_FEATURE_NAMES=DEFAULT_DATA_FEATURE_NAMES, na_cutoff = 0.5):
+def load_data(y_val = "DEG", rna_type='luisa', data_filepath="data", ct="Oligo_NN", DATA_FEATURE_NAMES=DEFAULT_DATA_FEATURE_NAMES, na_cutoff = 0.5,
+             na_fill_policy=None):
     """
     author: amit klein / rachel zeng
     email: a3klein@ucsd.edu
@@ -92,7 +93,12 @@ def load_data(y_val = "DEG", rna_type='luisa', data_filepath="data", ct="Oligo_N
             df_feat = df_feat[cols_to_keep].copy()
             
             # TODO: Fix this fillna thing when making the feature dataframes: 
-            df_feat = df_feat.fillna(0)
+            if na_fill_policy == "mean":
+                for i in df_feat.columns[df_feat.isnull().any(axis=0)]:     #---Applying Only on variables with NaN values
+                    df_feat[i] = df_feat[i].fillna(df_feat[i].mean())
+                # df_feat = df_feat.fillna(df_feat.mean())
+            else: 
+                df_feat = df_feat.fillna(0)
             
             # Checking that the features are valid
             assert df_feat.isna().sum().sum() == 0
@@ -132,8 +138,9 @@ def load_data(y_val = "DEG", rna_type='luisa', data_filepath="data", ct="Oligo_N
 
 
 
-def get_balanced_data(data, method=None, y_val='DEG'):
+def get_balanced_data(data, method=None, y_val='DEG', seed=13):
     # Separate the data into zero and non-zero y values
+    np.random.seed(seed)
     y = data['y']
     if y_val=='DEG': 
         if method == 'balanced': 
@@ -155,8 +162,8 @@ def get_balanced_data(data, method=None, y_val='DEG'):
         
             # Sample len(non_zero_indices) indices from each group
             n_samples = len(non_zero_indices)
-            # sampled_zero_indices = np.random.choice(zero_indices, n_samples // 2, replace=False)
-            sampled_zero_indices = np.random.choice(zero_indices, n_samples, replace=False)
+            sampled_zero_indices = np.random.choice(zero_indices, n_samples // 2, replace=False)
+            # sampled_zero_indices = np.random.choice(zero_indices, n_samples, replace=False)
             sampled_non_zero_indices = np.random.choice(non_zero_indices, n_samples, replace=False)
         
             # Combine the sampled indices
